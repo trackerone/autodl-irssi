@@ -2,6 +2,8 @@ name: Test
 
 on:
   push:
+    branches:
+      - master
   pull_request:
 
 permissions:
@@ -11,7 +13,8 @@ jobs:
   perl:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      # actions/checkout v5.0.0 (Node.js 24)
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -19,7 +22,7 @@ jobs:
             build-essential ca-certificates cpanminus irssi libssl-dev \
             libxml2-dev zlib1g-dev
       - name: Install Perl dependencies from cpanfile
-        run: sudo cpanm --notest --installdeps .
+        run: sudo cpanm --mirror https://cpan.metacpan.org --mirror-only --notest --installdeps .
       - name: Report versions
         run: |
           perl -V:version
