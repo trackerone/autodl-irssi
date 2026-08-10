@@ -20,7 +20,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             build-essential ca-certificates cpanminus irssi libssl-dev \
-            libxml2-dev zlib1g-dev
+            libio-socket-ssl-perl libnet-ssleay-perl libxml2-dev zlib1g-dev
+      - name: Validate HTTPS support
+        run: perl -MHTTP::Tiny -e 'my ($ok, $why) = HTTP::Tiny->can_ssl; die "$why\n" unless $ok; print "HTTPS support OK\n"'
       - name: Install Perl dependencies from cpanfile
         run: sudo cpanm --mirror https://cpan.metacpan.org --mirror-only --notest --installdeps .
       - name: Report versions

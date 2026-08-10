@@ -8,6 +8,8 @@ RUN apt-get update \
       ca-certificates \
       cpanminus \
       irssi \
+      libio-socket-ssl-perl \
+      libnet-ssleay-perl \
       libssl-dev \
       libxml2-dev \
       zlib1g-dev \
@@ -15,7 +17,8 @@ RUN apt-get update \
 
 WORKDIR /work
 COPY cpanfile ./
-RUN cpanm --mirror https://cpan.metacpan.org --mirror-only --notest --installdeps .
+RUN perl -MHTTP::Tiny -e 'my ($ok, $why) = HTTP::Tiny->can_ssl; die "$why\n" unless $ok; print "HTTPS support OK\n"' \
+ && cpanm --mirror https://cpan.metacpan.org --mirror-only --notest --installdeps .
 
 COPY . .
 
