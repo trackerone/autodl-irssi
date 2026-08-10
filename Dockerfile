@@ -15,7 +15,7 @@ RUN apt-get update \
 
 WORKDIR /work
 COPY cpanfile ./
-RUN cpanm --notest --installdeps .
+RUN cpanm --mirror https://cpan.metacpan.org --mirror-only --notest --installdeps .
 
 COPY . .
 

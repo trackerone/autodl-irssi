@@ -7,7 +7,8 @@ not imply that the external integrations are production-ready.
 
 Every application module declares Perl 5.8 as its language floor. That is a
 historical declaration, not evidence that Perl 5.8 remains supported. The
-reproducible baseline uses the supported Perl 5.38 supplied by Ubuntu 24.04.
+repeatable Ubuntu 24.04 baseline uses the supported Perl 5.38 supplied by
+Ubuntu 24.04.
 The application requires Irssi built with Perl support; the baseline uses the
 Ubuntu 24.04 Irssi package rather than pinning an upstream build.
 
@@ -36,7 +37,7 @@ tracker definitions, downloads release ZIP archives, and replaces files. Auto
 update is the configuration default. This mechanism is documented here but is
 intentionally not exercised or changed by the baseline.
 
-## Reproducible development environment
+## Repeatable Ubuntu 24.04 baseline
 
 Run locally with a compatible Perl and the dependencies from `cpanfile`:
 

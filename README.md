@@ -6,7 +6,7 @@
 ## Getting Started
 
 * Read the [docs](https://autodl-community.github.io/autodl-irssi).
-* For the reproducible development environment, baseline coverage, and known
+* For the repeatable Ubuntu 24.04 baseline, coverage, and known
   limitations, read [REVIVAL.md](REVIVAL.md).
 
 
