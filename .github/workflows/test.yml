@@ -1,0 +1,32 @@
+name: Test
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  perl:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential ca-certificates cpanminus irssi libssl-dev \
+            libxml2-dev zlib1g-dev
+      - name: Install Perl dependencies from cpanfile
+        run: sudo cpanm --notest --installdeps .
+      - name: Report versions
+        run: |
+          perl -V:version
+          irssi --version
+      - name: Run syntax checks and tests
+        run: make check
+      - name: Build development image
+        run: docker build -t autodl-irssi-dev .
+      - name: Run development image checks
+        run: docker run --rm autodl-irssi-dev
