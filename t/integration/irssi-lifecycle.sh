@@ -12,7 +12,7 @@ fi
 # These options are provided by Ubuntu 24.04's packaged Irssi.  Check the
 # executable itself so a package/CLI mismatch fails before the test is run.
 help=$($IRSSI --help 2>&1)
-for option in --config --home --no-connect --no-autorun --dummy; do
+for option in --config --home --noconnect --no-autorun --dummy; do
 	case "$help" in
 		*"$option"*) ;;
 		*) printf '%s\n' "Installed Irssi does not support required option: $option" >&2; exit 1 ;;
@@ -37,7 +37,7 @@ cp "$repo/t/fixtures/irssi/irssi.config" "$home/.irssi/config"
 set +e
 HOME=$home TERM=dumb timeout --foreground "$TIMEOUT" "$IRSSI" \
 	--home="$home/.irssi" --config="$home/.irssi/config" \
-	--no-connect --no-autorun --dummy >"$output" 2>&1 <<'COMMANDS'
+	--noconnect --no-autorun --dummy >"$output" 2>&1 <<'COMMANDS'
 /echo HARNESS:IRSSI_STARTED_OFFLINE
 /script load autodl-irssi.pl
 /echo HARNESS:FIRST_LOAD_COMPLETE
@@ -81,7 +81,7 @@ assert_count 'HARNESS:FIRST_UNLOAD_COMPLETE' 1
 assert_count 'HARNESS:SECOND_LOAD_COMPLETE' 1
 assert_count 'HARNESS:SECOND_UNLOAD_COMPLETE' 1
 
-if grep -Eiq 'script (error|not found)|fatal perl|uncaught exception|segmentation fault|core dumped|undefined subroutine|can.t locate|forced termination' "$output"; then
+if grep -Eiq 'disable: ex:|error in script|error loading script|script .* (not found|not loaded)|can.t (load|unload).*script|failed to (load|unload).*script|error when reading the config file:|error when reading tracker files:|could not parse .*\.tracker.*error:|fatal perl|uncaught exception|segmentation fault|core dumped|undefined subroutine|can.t locate|forced termination' "$output"; then
 	printf '%s\n' 'Irssi output contains a fatal lifecycle diagnostic.' >&2
 	exit 1
 fi
