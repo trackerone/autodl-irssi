@@ -1,7 +1,10 @@
-.PHONY: test syntax check
+.PHONY: test test-irssi syntax check
 
 test:
 	prove -I. -r t
+
+test-irssi:
+	./t/integration/irssi-lifecycle.sh
 
 syntax:
 	perl -I. -c AutodlIrssi/Bencoding.pm
@@ -10,4 +13,4 @@ syntax:
 	perl -I. -c AutodlIrssi/RtorrentCommands.pm
 	perl -I. -c AutodlIrssi/TextUtils.pm
 
-check: syntax test
+check: syntax test test-irssi

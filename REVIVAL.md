@@ -49,11 +49,12 @@ Or build and run the isolated Ubuntu environment:
 
 ```sh
 docker build -t autodl-irssi-dev .
-docker run --rm autodl-irssi-dev
+docker run --rm --network none autodl-irssi-dev
 ```
 
-The image command performs syntax checks for the independently loadable modules
-and runs all tests. It does not connect to IRC or start Irssi interactively.
+The image command performs syntax checks, deterministic tests, and the packaged
+Irssi lifecycle integration test. The container has no runtime network, and the
+Irssi harness explicitly disables IRC auto-connect and update checks.
 
 ## What currently works and is tested
 
@@ -66,45 +67,50 @@ The baseline confirms, without external services:
   conversion, and release-name canonicalisation;
 * line assembly across input chunks and final-buffer flushing;
 * deterministic rTorrent command string construction (not command execution);
-* UTC hour/day/week filter-state boundaries and counter increments.
+* UTC hour/day/week filter-state boundaries and counter increments;
+* two load/unload cycles of the real `autodl-irssi.pl` entry point in one
+  packaged Irssi process, using an isolated temporary home and local fixtures.
 
 These are characterization tests: they preserve current results rather than
 declaring every historical edge case correct.
 
 ## Integration-only or currently untested components
 
-Irssi startup, signal/timer registration, IRC connection and announce handling,
-tracker XML definitions (not present in this source checkout), live torrent
+IRC connection and announce handling, production tracker XML definitions, live torrent
 downloads, HTTP redirects, TLS, FTP, sockets, SCGI/XML-RPC/rTorrent, uTorrent
 WebUI, watch folders, external commands, WOL, the local GUI server, updater file
 replacement, and ruTorrent all require later integration fixtures or services.
-Configuration parsing depends on the Globals/Irssi layer and is not mocked in
-this first slice; honest isolation requires a small injectable message boundary.
-The whole module graph also has load-time Irssi and TLS side effects, so CI does
-not pretend that loading five isolated modules is a full application startup.
+The lifecycle harness covers configuration parsing and the whole module graph in
+Irssi without claiming coverage of service behavior.
 
 ## Confirmed blockers and repository comparison
 
 No application compatibility defect was found in the deterministic subset on
-Perl 5.38. A full startup cannot be confirmed without an Irssi process and
-tracker definitions. The checked-out history ends at release 2.6.2 (`b534cbe`).
-Network access from the development environment returned HTTP 403 while fetching
-both `trackerone/autodl-irssi` and `autodl-community/autodl-irssi`; consequently,
-the fork/upstream comparison and current issue text could not be independently
-refreshed. No divergence claim is made.
+Perl 5.38. The checked-out history contains release 2.6.2 (`b534cbe`).
 
-Upstream issues [#190](https://github.com/autodl-community/autodl-irssi/issues/190),
-[#191](https://github.com/autodl-community/autodl-irssi/issues/191),
-[#198](https://github.com/autodl-community/autodl-irssi/issues/198), and
-[#210](https://github.com/autodl-community/autodl-irssi/issues/210) must be
-triaged against their live descriptions before fixes begin. Relevant code
-boundaries for that triage are `AutodlIrssi/HttpRequest.pm` and
-`AutodlIrssi/SslSocket.pm` (HTTP/TLS), `AutodlIrssi/SocketBase.pm`,
-`AutodlIrssi/Socket.pm`, and `AutodlIrssi/DomainSocket.pm` (socket lifecycle),
-`AutodlIrssi/Updater.pm` (updates), and `AutodlIrssi/Scgi.pm`,
-`AutodlIrssi/XmlRpc.pm`, and `AutodlIrssi/RtorrentCommands.pm` (rTorrent).
-Those references identify review locations only; none of the four issues has
-been reproduced in this work.
+The following are verified descriptions of upstream reports, not symptoms
+reproduced by this work:
+
+* [Issue #190 — “Hanging randomly when downloading torrent”](https://github.com/autodl-community/autodl-irssi/issues/190)
+  reports an intermittent HTTPS torrent download stalling during nonblocking
+  SSL reads and leaving the Irssi UI hung. The relevant review boundaries are
+  `AutodlIrssi/HttpRequest.pm`, `AutodlIrssi/SslSocket.pm`, and the socket
+  lifecycle modules `SocketBase.pm` and `Socket.pm`.
+* [Issue #191 — “MyDialogManager._OnDownloadedFiles:No Settings Found : could not parse HTTP response header”](https://github.com/autodl-community/autodl-irssi/issues/191)
+  reports ruTorrent settings and updater requests timing out with HTTP
+  response-header parsing errors. Boundaries are `HttpRequest.pm`,
+  `GuiServer.pm`, and `Updater.pm`; ruTorrent itself is outside this repository.
+* [Issue #198 — “Tracker update not installing”](https://github.com/autodl-community/autodl-irssi/issues/198)
+  reports the updater claiming current versions or successful completion while
+  an installed tracker definition remains outdated. Boundaries are
+  `Updater.pm`, `TrackerManager.pm`, and tracker file/path handling in `Dirs.pm`.
+* [Issue #210 — “irssi goes into 100% CPU utilization when it can't download a torrent with 401 error.”](https://github.com/autodl-community/autodl-irssi/issues/210)
+  associates an HTTP 401 torrent response with Irssi reaching 100% CPU usage.
+  Boundaries are `HttpRequest.pm`, `ActiveConnections.pm`, `SocketBase.pm`, and
+  `Socket.pm`.
+
+These mappings identify code to inspect only. They neither establish root
+causes nor propose fixes, and none of the four reports is reproduced here.
 
 ## Security observations
 
@@ -126,13 +132,11 @@ These observations are review prompts, not reproduced vulnerabilities:
 
 ## Recommended next phases
 
-1. Fetch and record the fork/upstream diff and issue descriptions in a networked
-   environment; map each report to a minimal reproducer.
-2. Add an Irssi test harness that starts with a temporary home/config and local
-   tracker fixtures, then verify load/unload without a network connection.
-3. Isolate configuration diagnostics from Globals/Irssi and characterize config,
+1. Build minimal offline reproducers for the recorded upstream reports before
+   considering fixes.
+2. Isolate configuration diagnostics from Globals/Irssi and characterize config,
    filter, tracker XML, and announce parsing with fixtures.
-4. Build local-only fake servers for HTTP/TLS/socket and SCGI/XML-RPC behavior.
-5. Only after those tests exist, address HTTP/TLS/socket and updater findings in
+3. Build local-only fake servers for HTTP/TLS/socket and SCGI/XML-RPC behavior.
+4. Only after those tests exist, address HTTP/TLS/socket and updater findings in
    separate, narrowly scoped changes, followed by rTorrent and ruTorrent
    integration work.

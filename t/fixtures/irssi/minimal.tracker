@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<trackerinfo type="offline-fixture" shortName="Offline" longName="Offline lifecycle fixture">
+  <settings>
+    <description />
+  </settings>
+  <servers>
+    <server network="offline.invalid" channelNames="#offline" announcerNames="fixture" />
+  </servers>
+  <parseinfo>
+    <linepatterns>
+      <extract>
+        <regex value="^(.+)$" />
+        <vars><var name="torrentName" /></vars>
+      </extract>
+    </linepatterns>
+    <linematched />
+    <ignore />
+  </parseinfo>
+</trackerinfo>
