@@ -12,7 +12,7 @@ fi
 # These options are provided by Ubuntu 24.04's packaged Irssi.  Check the
 # executable itself so a package/CLI mismatch fails before the test is run.
 help=$($IRSSI --help 2>&1)
-for option in --config --home --noconnect --no-autorun --dummy; do
+for option in --config --home --noconnect --dummy; do
 	case "$help" in
 		*"$option"*) ;;
 		*) printf '%s\n' "Installed Irssi does not support required option: $option" >&2; exit 1 ;;
@@ -37,7 +37,7 @@ cp "$repo/t/fixtures/irssi/irssi.config" "$home/.irssi/config"
 set +e
 HOME=$home TERM=dumb timeout --foreground "$TIMEOUT" "$IRSSI" \
 	--home="$home/.irssi" --config="$home/.irssi/config" \
-	--noconnect --no-autorun --dummy >"$output" 2>&1 <<'COMMANDS'
+	--noconnect --dummy >"$output" 2>&1 <<'COMMANDS'
 /echo HARNESS:IRSSI_STARTED_OFFLINE
 /script load autodl-irssi.pl
 /echo HARNESS:FIRST_LOAD_COMPLETE
