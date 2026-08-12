@@ -92,16 +92,17 @@ assert_count() {
 assert_count 'HTTP401:IRSSI_STARTED_OFFLINE' "$window_log" 1
 assert_count 'HTTP401:DRIVER_STARTED' "$window_log" 1
 assert_count 'HTTP401:IRSSI_RESPONSIVE' "$window_log" 1
-assert_count 'Retrying request (1)' "$window_log" 1
-assert_count 'Retrying request (2)' "$window_log" 1
 assert_count 'HTTP401:FINAL_CALLBACK:1:' "$window_log" 1
-assert_count "Timed out! Error: HTTP error '401 Unauthorized'" "$window_log" 2
+assert_count "Timed out! Error: HTTP error 'HTTP/1.1 401 Unauthorized'" "$window_log" 2
 assert_count 'HTTP401:SETTLE_COMPLETE' "$window_log" 1
+# The loopback server log is the authoritative retry evidence. The production
+# "Retrying request" messages are level 4 and intentionally hidden by the
+# fixture's normal output level.
 assert_count 'REQUEST ' "$request_log" 3
 assert_count 'RESPONSE ' "$request_log" 3
 assert_count 'HTTP/1.1 401 Unauthorized' "$request_log" 3
 
-if grep -Eiq 'segmentation fault|core dumped|uncaught exception|stale callback|forced termination|error in script|error loading script' "$window_log" "$terminal_log"; then
+if grep -Eiq 'segmentation fault|core dumped|uncaught exception|stale callback|forced termination|error in script|error loading script|assertion .* failed' "$window_log" "$terminal_log"; then
 	printf '%s\n' 'Integration output contains a fatal diagnostic.' >&2
 	exit 1
 fi

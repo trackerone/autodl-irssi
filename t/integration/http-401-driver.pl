@@ -40,9 +40,12 @@ our %IRSSI = (
 		$self->SUPER::_messageFail($level, $message);
 		$final_count++;
 		Irssi::print("HTTP401:FINAL_CALLBACK:$final_count:$message");
-		Irssi::timeout_add_once(1000, sub {
+		# Register the settling timer through autodl-irssi's wrapper. Directly
+		# calling Irssi::timeout_add_once() from this test subclass leaves Irssi
+		# without a script owner and triggers its script != NULL assertion.
+		AutodlIrssi::Irssi::irssi_timeout_add_once(1000, sub {
 			Irssi::print('HTTP401:SETTLE_COMPLETE');
-			Irssi::command('quit');
+			AutodlIrssi::Irssi::irssi_command('quit');
 		}, undef);
 	}
 }

@@ -98,7 +98,7 @@ With `maxDownloadRetryTimeSeconds` set to 3 seconds for this test only, the
 loopback fixture observes three GET requests: the initial request and two
 requests started by the production 2000 ms retry timer. Every response is
 `401 Unauthorized`. The terminal callback occurs once after the retry window
-has elapsed and reports `Timed out! Error: HTTP error '401 Unauthorized'`.
+has elapsed and reports `Timed out! Error: HTTP error 'HTTP/1.1 401 Unauthorized'`.
 Irssi processes a separate 500 ms responsiveness timer while the HTTP request
 is pending, remains alive for a one-second post-callback settling interval, and
 then exits normally. The fixture binds `127.0.0.1` on an operating-system-chosen
