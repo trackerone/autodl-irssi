@@ -29,8 +29,10 @@ jobs:
         run: |
           perl -V:version
           irssi --version
-      - name: Run syntax checks and tests
-        run: make check
+      - name: Run deterministic and Irssi lifecycle checks
+        run: make syntax test test-irssi
+      - name: Run HTTP 401 integration reproducer
+        run: make test-http-401
       - name: Build development image
         run: docker build -t autodl-irssi-dev .
       - name: Run development image checks
