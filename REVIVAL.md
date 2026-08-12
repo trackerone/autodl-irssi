@@ -83,6 +83,30 @@ replacement, and ruTorrent all require later integration fixtures or services.
 The lifecycle harness covers configuration parsing and the whole module graph in
 Irssi without claiming coverage of service behavior.
 
+## Issue 190 offline characterization
+
+The dedicated `make test-https-stall` integration reproducer exercises the
+production `HttpRequest`, `SslSocket`, `SocketBase`, Net::SSLeay, and Irssi
+event-loop path without contacting an external service. A loopback-only
+`IO::Socket::SSL` fixture completes the TLS handshake, validates the received
+GET request, then withholds all HTTP response bytes for 2500 ms before returning
+a complete `HTTP/1.1 200 OK` response. The fixture uses an operating-system-
+selected ephemeral port, FIFO readiness synchronization, a committed test-only
+certificate, hard timeouts, and deterministic cleanup.
+
+Immediately after the production HTTPS request has been written, the test
+schedules an independent 500 ms Irssi timer. On Ubuntu 24.04, both the direct CI
+run and the network-disabled development container consistently record the
+successful HTTP callback before the already-expired timer. Once the fixture
+releases its response, the callback runs exactly once, the delayed timer is
+processed, and Irssi exits normally after a settling interval. This demonstrates
+a bounded 2500 ms event-loop stall while the production TLS read waits for data.
+
+The result is consistent with the nonblocking SSL-read behavior reported in
+issue #190. It does not reproduce the report's intermittent permanent hang,
+measure CPU use, establish a root cause, or propose a production fix. No
+production HTTP, TLS, socket, retry, or timeout behavior is changed.
+
 ## Issue 210 offline characterization
 
 The dedicated `make test-http-401` integration reproducer characterizes the
@@ -136,9 +160,10 @@ reproduced by this work:
   `Socket.pm`.
 
 These mappings identify code to inspect only. They neither establish root
-causes nor propose fixes. The repeated HTTP behavior associated with issue #210
-is characterized above; its reported CPU symptom and the other three reports
-are not reproduced here.
+causes nor propose fixes. The bounded HTTPS event-loop stall associated with
+issue #190 and the repeated HTTP behavior associated with issue #210 are
+characterized above. Issue #190's intermittent permanent hang, issue #210's CPU
+symptom, and the other two reports are not reproduced here.
 
 ## Security observations
 
