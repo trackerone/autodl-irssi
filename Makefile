@@ -1,4 +1,4 @@
-.PHONY: test test-irssi test-http-401 test-https-stall syntax check
+.PHONY: test test-irssi test-http-401 test-https-stall test-http-incomplete-header syntax check
 
 test:
 	prove -I. -r t
@@ -12,6 +12,9 @@ test-http-401:
 test-https-stall:
 	./t/integration/https-stall.sh
 
+test-http-incomplete-header:
+	./t/integration/http-incomplete-header.sh
+
 syntax:
 	perl -I. -c AutodlIrssi/Bencoding.pm
 	perl -I. -c AutodlIrssi/FilterState.pm
@@ -19,4 +22,4 @@ syntax:
 	perl -I. -c AutodlIrssi/RtorrentCommands.pm
 	perl -I. -c AutodlIrssi/TextUtils.pm
 
-check: syntax test test-irssi test-http-401 test-https-stall
+check: syntax test test-irssi test-http-401 test-https-stall test-http-incomplete-header

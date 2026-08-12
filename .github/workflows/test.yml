@@ -35,6 +35,8 @@ jobs:
         run: make test-http-401
       - name: Run HTTPS stall integration reproducer
         run: make test-https-stall
+      - name: Run incomplete HTTP header integration reproducer
+        run: make test-http-incomplete-header
       - name: Build development image
         run: docker build -t autodl-irssi-dev .
       - name: Run development image checks
