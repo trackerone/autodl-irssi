@@ -90,6 +90,7 @@ assert_count() {
 assert_count 'HTTPHEADER:IRSSI_STARTED_OFFLINE' "$window_log" 1
 assert_count 'HTTPHEADER:DRIVER_STARTED' "$window_log" 1
 assert_count 'HTTPHEADER:IRSSI_RESPONSIVE' "$window_log" 1
+assert_count 'HTTPHEADER:FINAL_CALLBACK:' "$window_log" 1
 assert_count 'HTTPHEADER:FINAL_CALLBACK:1:Timed out! Error: Could not parse HTTP response header' "$window_log" 1
 assert_count 'HTTPHEADER:SETTLE_COMPLETE' "$window_log" 1
 assert_count 'REQUEST ' "$server_log" 3
