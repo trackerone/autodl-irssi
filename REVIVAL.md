@@ -83,6 +83,32 @@ replacement, and ruTorrent all require later integration fixtures or services.
 The lifecycle harness covers configuration parsing and the whole module graph in
 Irssi without claiming coverage of service behavior.
 
+## Issue 210 offline characterization
+
+The dedicated `make test-http-401` integration reproducer characterizes the
+HTTP behavior associated with issue #210 without contacting a tracker or IRC
+server. It starts the Ubuntu 24.04 packaged Irssi in a pseudo-terminal with a
+fresh home, loads the real `autodl-irssi.pl`, and invokes
+`AutodlIrssi::MatchedRelease::start()` with narrowly scoped test substitutes for
+download-history persistence and announce-parser metadata. The subsequent path
+uses the production `MatchedRelease`, `HttpRequest`, `Socket`, and `SocketBase`
+code, including Irssi input handlers and timer callbacks.
+
+With `maxDownloadRetryTimeSeconds` set to 3 seconds for this test only, the
+loopback fixture observes three GET requests: the initial request and two
+requests started by the production 2000 ms retry timer. Every response is
+`401 Unauthorized`. The terminal callback occurs once after the retry window
+has elapsed and reports `Timed out! Error: HTTP error '401 Unauthorized'`.
+Irssi processes a separate 500 ms responsiveness timer while the HTTP request
+is pending, remains alive for a one-second post-callback settling interval, and
+then exits normally. The fixture binds `127.0.0.1` on an operating-system-chosen
+ephemeral port and uses a FIFO to publish readiness, rather than a sleep.
+
+This evidence reproduces the 401 retry trigger and repeated requests. It does
+not reproduce or measure the reported 100% CPU symptom, and it does not
+establish a root cause or proposed fix. No production retry policy, interval,
+default, HTTP parsing, or socket behavior is changed by the characterization.
+
 ## Confirmed blockers and repository comparison
 
 No application compatibility defect was found in the deterministic subset on
@@ -110,7 +136,9 @@ reproduced by this work:
   `Socket.pm`.
 
 These mappings identify code to inspect only. They neither establish root
-causes nor propose fixes, and none of the four reports is reproduced here.
+causes nor propose fixes. The repeated HTTP behavior associated with issue #210
+is characterized above; its reported CPU symptom and the other three reports
+are not reproduced here.
 
 ## Security observations
 
