@@ -34,4 +34,6 @@ jobs:
       - name: Build development image
         run: docker build -t autodl-irssi-dev .
       - name: Run development image checks
-        run: docker run --rm autodl-irssi-dev
+        run: docker run --rm --network none autodl-irssi-dev
+      - name: Validate workflow YAML
+        run: ruby -e "require 'yaml'; YAML.load_file('.github/workflows/test.yml'); puts 'Workflow YAML is valid'"
