@@ -33,6 +33,8 @@ jobs:
         run: make syntax test test-irssi
       - name: Run HTTP 401 integration reproducer
         run: make test-http-401
+      - name: Run HTTPS stall integration reproducer
+        run: make test-https-stall
       - name: Build development image
         run: docker build -t autodl-irssi-dev .
       - name: Run development image checks

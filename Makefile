@@ -1,4 +1,4 @@
-.PHONY: test test-irssi test-http-401 syntax check
+.PHONY: test test-irssi test-http-401 test-https-stall syntax check
 
 test:
 	prove -I. -r t
@@ -9,6 +9,9 @@ test-irssi:
 test-http-401:
 	./t/integration/http-401-retry.sh
 
+test-https-stall:
+	./t/integration/https-stall.sh
+
 syntax:
 	perl -I. -c AutodlIrssi/Bencoding.pm
 	perl -I. -c AutodlIrssi/FilterState.pm
@@ -16,4 +19,4 @@ syntax:
 	perl -I. -c AutodlIrssi/RtorrentCommands.pm
 	perl -I. -c AutodlIrssi/TextUtils.pm
 
-check: syntax test test-irssi test-http-401
+check: syntax test test-irssi test-http-401 test-https-stall
