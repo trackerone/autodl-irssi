@@ -77,9 +77,10 @@ declaring every historical edge case correct.
 ## Integration-only or currently untested components
 
 IRC connection and announce handling, production tracker XML definitions, live torrent
-downloads, HTTP redirects, TLS, FTP, sockets, SCGI/XML-RPC/rTorrent, uTorrent
-WebUI, watch folders, external commands, WOL, the local GUI server, updater file
-replacement, and ruTorrent all require later integration fixtures or services.
+downloads, HTTP redirects, general TLS behavior, FTP, sockets, SCGI/XML-RPC/rTorrent,
+uTorrent WebUI, watch folders, external commands, WOL, the local GUI server, application
+updater file replacement, and ruTorrent all require later integration fixtures or
+services. Tracker updater replacement has one controlled offline characterization below.
 The lifecycle harness covers configuration parsing and the whole module graph in
 Irssi without claiming coverage of service behavior.
 
@@ -157,6 +158,29 @@ not reproduce or measure the reported 100% CPU symptom, and it does not
 establish a root cause or proposed fix. No production retry policy, interval,
 default, HTTP parsing, or socket behavior is changed by the characterization.
 
+## Issue 198 offline characterization
+
+The dedicated `make test-tracker-update` integration characterizes the tracker
+installation path associated with issue #198 without contacting GitHub. Direct
+inspection of the historical `autodl-trackers-v284.zip` release asset confirms
+that its 120 tracker members are stored as flat filenames at the archive root.
+The test transport therefore returns a small archive with that same layout to
+the production `Updater` inside a packaged Irssi process.
+
+Starting with one current and one obsolete tracker file, the controlled update
+calls its success handler exactly once, replaces the current file's contents,
+removes the obsolete file, and adds a new file. Reloading through the production
+`TrackerManager` then exposes exactly the two tracker types from the archive.
+This establishes that the release-style archive replacement and reload path
+works in the isolated Ubuntu 24.04 fixture; it does not reproduce the stale-file
+result reported in issue #198.
+
+The test does not contact the releases API, preserve the full historical v284
+archive in the repository, reproduce the reporter's filesystem ownership,
+permissions, symlink layout, or installation path, establish a root cause, or
+propose a fix. No production updater, tracker manager, or path behavior is
+changed by the characterization.
+
 ## Confirmed blockers and repository comparison
 
 No application compatibility defect was found in the deterministic subset on
@@ -186,10 +210,12 @@ reproduced by this work:
 These mappings identify code to inspect only. They neither establish root
 causes nor propose fixes. The bounded HTTPS event-loop stall associated with
 issue #190, the incomplete-header parser/retry result associated with issue
-#191, and the repeated HTTP behavior associated with issue #210 are
+#191, the controlled tracker replacement and reload path associated with issue
+#198, and the repeated HTTP behavior associated with issue #210 are
 characterized above. Issue #190's intermittent permanent hang, issue #191's
-external ruTorrent settings failure and original upstream cause, issue #210's
-CPU symptom, and issue #198 are not reproduced here.
+external ruTorrent settings failure and original upstream cause, issue #198's
+reported stale installed file, and issue #210's CPU symptom are not reproduced
+here.
 
 ## Security observations
 

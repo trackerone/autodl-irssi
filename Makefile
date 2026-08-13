@@ -1,4 +1,4 @@
-.PHONY: test test-irssi test-http-401 test-https-stall test-http-incomplete-header syntax check
+.PHONY: test test-irssi test-http-401 test-https-stall test-http-incomplete-header test-tracker-update syntax check
 
 test:
 	prove -I. -r t
@@ -15,6 +15,9 @@ test-https-stall:
 test-http-incomplete-header:
 	./t/integration/http-incomplete-header.sh
 
+test-tracker-update:
+	./t/integration/tracker-update-install.sh
+
 syntax:
 	perl -I. -c AutodlIrssi/Bencoding.pm
 	perl -I. -c AutodlIrssi/FilterState.pm
@@ -22,4 +25,4 @@ syntax:
 	perl -I. -c AutodlIrssi/RtorrentCommands.pm
 	perl -I. -c AutodlIrssi/TextUtils.pm
 
-check: syntax test test-irssi test-http-401 test-https-stall test-http-incomplete-header
+check: syntax test test-irssi test-http-401 test-https-stall test-http-incomplete-header test-tracker-update
