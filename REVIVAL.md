@@ -107,6 +107,30 @@ issue #190. It does not reproduce the report's intermittent permanent hang,
 measure CPU use, establish a root cause, or propose a production fix. No
 production HTTP, TLS, socket, retry, or timeout behavior is changed.
 
+## Issue 191 offline characterization
+
+The dedicated `make test-http-incomplete-header` integration reproducer
+exercises the production `HttpRequest`, `Socket`, `SocketBase`, retry timer,
+and packaged Irssi event loop without contacting GitHub, ruTorrent, IRC, or
+another external service. A loopback fixture accepts a real GET request, writes
+`HTTP/1.1 200 OK` and the beginning of a header field, then closes the
+connection before the terminating blank line. It repeats this deterministic
+partial response for every production retry.
+
+With `maxDownloadRetryTimeSeconds` set to 3 seconds for this test only, both
+the direct Ubuntu 24.04 CI run and the network-disabled development container
+observe three requests and three partial responses. Irssi processes an
+independent 500 ms responsiveness timer between attempts. After the retry
+window, the final callback occurs exactly once with
+`Timed out! Error: Could not parse HTTP response header`; Irssi then completes
+a one-second settling interval and exits normally.
+
+This reproduces the parser/retry error text reported in issue #191 at the shared
+HTTP boundary. It does not exercise the external ruTorrent client, reproduce
+its settings dialog failure, prove that the updater produced the original
+incomplete response, establish a root cause, or propose a production fix. No
+production HTTP parsing, retry, timeout, updater, or GUI behavior is changed.
+
 ## Issue 210 offline characterization
 
 The dedicated `make test-http-401` integration reproducer characterizes the
@@ -161,9 +185,11 @@ reproduced by this work:
 
 These mappings identify code to inspect only. They neither establish root
 causes nor propose fixes. The bounded HTTPS event-loop stall associated with
-issue #190 and the repeated HTTP behavior associated with issue #210 are
-characterized above. Issue #190's intermittent permanent hang, issue #210's CPU
-symptom, and the other two reports are not reproduced here.
+issue #190, the incomplete-header parser/retry result associated with issue
+#191, and the repeated HTTP behavior associated with issue #210 are
+characterized above. Issue #190's intermittent permanent hang, issue #191's
+external ruTorrent settings failure and original upstream cause, issue #210's
+CPU symptom, and issue #198 are not reproduced here.
 
 ## Security observations
 
