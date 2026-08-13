@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<trackerinfo type="obsolete-fixture" shortName="Obsolete" longName="Obsolete tracker fixture">
+  <settings>
+    <description />
+  </settings>
+  <servers>
+    <server network="obsolete.invalid" channelNames="#obsolete" announcerNames="fixture" />
+  </servers>
+  <parseinfo>
+    <linepatterns>
+      <extract>
+        <regex value="^(.+)$" />
+        <vars><var name="torrentName" /></vars>
+      </extract>
+    </linepatterns>
+    <linematched />
+    <ignore />
+  </parseinfo>
+</trackerinfo>

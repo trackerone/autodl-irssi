@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<trackerinfo type="updated-fixture" shortName="Updated" longName="Updated tracker fixture">
+  <settings>
+    <description />
+  </settings>
+  <servers>
+    <server network="updated.invalid" channelNames="#updated" announcerNames="fixture" />
+  </servers>
+  <parseinfo>
+    <linepatterns>
+      <extract>
+        <regex value="^(.+)$" />
+        <vars><var name="torrentName" /></vars>
+      </extract>
+    </linepatterns>
+    <linematched />
+    <ignore />
+  </parseinfo>
+</trackerinfo>
