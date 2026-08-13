@@ -1,0 +1,10 @@
+{
+  "tag_name": "v290.7.2",
+  "body": "Offline fixture for the verified v290.7.2 tracker release metadata.",
+  "assets": [
+    {
+      "name": "v290.7.2.zip",
+      "browser_download_url": "https://github.com/mkgeeky/autodl-trackers/releases/download/v290.7.2/v290.7.2.zip"
+    }
+  ]
+}
