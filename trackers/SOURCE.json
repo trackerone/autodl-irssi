@@ -3,6 +3,10 @@
   "commit": "a91caa41e27ae6b0f542da2ba339a9665c66b023",
   "imported_on": "2026-08-14",
   "tracker_files": 77,
+  "local_repairs": {
+    "HUNO.tracker": "Use supported textbox and line-matched operation tags with canonical output variable names.",
+    "LustHive.tracker": "Use the required value attribute for the authkey string fragment."
+  },
   "release_only_files_not_imported": [
     "Upload.cx.tracker"
   ]

@@ -32,7 +32,7 @@
 
     <settings>
         <description text="Go to your profile, My Security -> RSS Key (RID), copy your current key and paste here"/>
-        <rsskey/>
+        <textbox name="rsskey"/>
     </settings>
 
     <servers>
@@ -65,16 +65,14 @@
             </extract>
         </linepatterns>
         <linematched>
-            <var name="Freeleech">
+            <var name="freeleech">
                 <string value="false"/>
             </var>
-            <var name="Internal">
+            <var name="internal">
                 <string value="false"/>
             </var>
             <setregex srcvar="$freeleech" varName="freeleech" regex="Yes" newValue="true"/>
-            <setvarif srcvar="$internal" varName="internal" regex="Yes" newValue="true"/>
-                <!--Ignored-->
-                <regex value=""/>
+            <setregex srcvar="$internal" varName="internal" regex="Yes" newValue="true"/>
           <!--https://base.url/torrent/download/<id>.<rsskey>-->
             <var name="torrentUrl">
               <string value="https://"/>
