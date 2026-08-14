@@ -1,0 +1,100 @@
+<?xml version="1.0"?>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is IRC Auto Downloader.
+   -
+   - The Initial Developer of the Original Code is
+   - David Nilsson.
+   - Portions created by the Initial Developer are Copyright (C) 2010, 2011
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - ***** END LICENSE BLOCK ***** -->
+
+<trackerinfo
+	type="aw"
+	shortName="AW"
+	longName="AnimeWorld"
+	siteName="animeworld.cx"
+	follow302links="true">
+
+	<settings>
+		<description text="Paste (Ctrl+V) any AnimeWorld RSS link into the text box below to automatically extract RSS Key (RID)"/>
+		<passkey pasteRegex="([^.]{32})$" tooltiptext="Paste your AnimeWorld RSS link or RSS Key (RID) here."/>
+	</settings>
+
+	<servers>
+		<server
+			network="AnimeWorld"
+			serverNames="irc.rizon.net"
+			channelNames="#animeworld"
+			announcerNames="ryuko"
+		/>
+	</servers>
+
+	<parseinfo>
+		<multilinepatterns>
+			<!-- New Upload -->
+			<extract>
+				<!--Neuer Upload: Penguindrum.S01.German.DL.DTS.1080p.BluRay.10bit.x265-CNY [Kategorie: Anime Serien][Typ: Encode][Auflösung: 1080p][Größe: 34.36 GiB][FL: 100%][Vorgestellt] | http://animeworld.cx/torrents/38638 | Uploader: Anonym-->
+                <regex value="Neuer Upload: (.+) \[Kategorie: (.+)\]\[Typ: (.+)\]\[Auflösung: (.+)\]\[Größe: (.+)\]\[FL: (.+)%\](?:\[(.+)])? \| (https?\:\/\/.*\/)torrents\/(\d+) \| Uploader: (.+)"/>
+				<vars>
+					<var name="torrentName"/>
+					<var name="category"/>
+                    <var name="$releaseTags"/>
+                    <var name="resolution"/>
+                    <var name="$torrentSize"/>
+                    <var name="$freeleech"/>
+					<var name="tags"/>
+                    <var name="$baseUrl"/>
+					<var name="$torrentId"/>
+					<var name="uploader"/>
+				</vars>
+			</extract>
+			<!-- Torrent featured -->
+			<extract>
+				<!--Torrent vorgestellt: Insomniacs.after.School.S01.German.DL.DTS.1080p.BluRay.10bit.x265-DK [Kategorie: Anime Serien][Typ: Encode][Auflösung: 1080p][Größe: 12.19 GiB] | http://animeworld.cx/torrents/39239-->
+				<regex value="Torrent vorgestellt: (.+) \[Kategorie: (.+)\]\[Typ: (.+)\]\[Auflösung: (.+)\]\[Größe: (.+)\] \| (https?\:\/\/.*\/)torrents\/(\d+)"/>
+				<vars>
+					<var name="torrentName"/>
+					<var name="category"/>
+					<var name="$releaseTags"/>
+					<var name="resolution"/>
+					<var name="$torrentSize"/>
+                    <var name="$baseUrl"/>
+					<var name="$torrentId"/>
+				</vars>
+			</extract>
+		</multilinepatterns>
+		<linematched>
+			<var name="freeleech">
+				<string value="false"/>
+			</var>
+			
+			<setregex srcvar="$freeleech" regex="1" varName="freeleech" newValue="true"/>
+			
+			<!--base.url/torrent/download/torrentid.passkey-->
+			<var name="torrentUrl">
+				<var name="$baseUrl"/>
+				<string value="torrent/download/"/>
+				<var name="$torrentId"/>
+				<string value="."/>
+				<var name="passkey"/>
+			</var>
+		</linematched>
+		<ignore>
+		</ignore>
+	</parseinfo>
+</trackerinfo>

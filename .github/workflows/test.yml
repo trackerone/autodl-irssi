@@ -39,6 +39,8 @@ jobs:
         run: make test-http-incomplete-header
       - name: Run tracker update installation characterization
         run: make test-tracker-update
+      - name: Validate imported tracker definitions
+        run: make test-trackers
       - name: Build development image
         run: docker build -t autodl-irssi-dev .
       - name: Run development image checks

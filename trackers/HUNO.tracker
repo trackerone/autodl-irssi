@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is IRC Auto Downloader.
+   -
+   - The Initial Developer of the Original Code is
+   - David Nilsson.
+   - Portions created by the Initial Developer are Copyright (C) 2010, 2011
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - ***** END LICENSE BLOCK ***** -->
+<!-- Desired by HUNO in autobrr
+   - Expressing my gratitude here -->
+<trackerinfo
+    type="huno"
+    shortName="huno"
+    longName="Hawke-UNO"
+    siteName="hawke">
+
+    <settings>
+        <description text="Go to your profile, My Security -> RSS Key (RID), copy your current key and paste here"/>
+        <textbox name="rsskey"/>
+    </settings>
+
+    <servers>
+        <server
+            network="Hawke-UNO"
+            serverNames="irc.hawke.uno"
+            channelNames="#huno_announce"
+            announcerNames="Luwin"
+            />
+    </servers>
+
+    <parseinfo>
+        <linepatterns>
+            <extract>
+            <!-- Regex rule inspired by HUNO in autobrr. Expressing my gratitude here. -->
+              <!--New in [Movie]: Old Movie (1981) (1080p BluRay x265 SDR DD 2.0 English - group1) [4.5 GiB] [FL: No] [INTERNAL: Yes] [https://hawke.uno/torrents/0000] by: [anon] -->
+              <!--New in [TV]: Popular show (2022) S01E09 (1080p DSNP WEB-DL x265 SDR DDP Atmos 5.1 English - GROUP)[REPACK] [955.97 MiB] [FL: Yes] [INTERNAL: Yes] [https://hawke.uno/torrents/0000] by: [uploader] -->
+              <regex value="New in \[(.+)\]: (.+)(?:\[(?:REPACK\d?|PROPER)\])? \[(.+)\] \[FL: (Yes|No)\] \[INTERNAL: (Yes|No)\] \[https:\/\/(.+\/)torrents\/(\d+)\] by: \[(.+)\]"/>
+
+              <vars>
+                <var name="category"/>
+                <var name="torrentName"/>
+                <var name="version"/>
+                <var name="torrentSize"/>
+                <var name="$freeleech"/>
+                <var name="$internal"/>
+                <var name="$baseUrl"/>
+                <var name="$torrentId"/>
+              </vars>
+            </extract>
+        </linepatterns>
+        <linematched>
+            <var name="freeleech">
+                <string value="false"/>
+            </var>
+            <var name="internal">
+                <string value="false"/>
+            </var>
+            <setregex srcvar="$freeleech" varName="freeleech" regex="Yes" newValue="true"/>
+            <setregex srcvar="$internal" varName="internal" regex="Yes" newValue="true"/>
+          <!--https://base.url/torrent/download/<id>.<rsskey>-->
+            <var name="torrentUrl">
+              <string value="https://"/>
+              <var name="$baseUrl"/>
+              <string value="torrent/download/"/>
+              <var name="$torrentId"/>
+              <string value="."/>
+              <var name="rsskey"/>
+            </var>
+        </linematched>
+        <ignore>
+        </ignore>
+    </parseinfo>
+</trackerinfo>

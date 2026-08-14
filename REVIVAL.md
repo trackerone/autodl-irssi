@@ -71,15 +71,17 @@ The baseline confirms, without external services:
 * deterministic rTorrent command string construction (not command execution);
 * UTC hour/day/week filter-state boundaries and counter increments;
 * two load/unload cycles of the real `autodl-irssi.pl` entry point in one
-  packaged Irssi process, using an isolated temporary home and local fixtures.
+  packaged Irssi process, using an isolated temporary home and local fixtures;
+* all 77 imported production tracker definitions parsing to unique tracker
+  types and reloading through the production `TrackerManager`.
 
 These are characterization tests: they preserve current results rather than
 declaring every historical edge case correct.
 
 ## Integration-only or currently untested components
 
-IRC connection and announce handling, production tracker XML definitions, live torrent
-downloads, HTTP redirects, general TLS behavior, FTP, sockets, SCGI/XML-RPC/rTorrent,
+IRC connection and live announce matching, live torrent downloads, HTTP redirects,
+general TLS behavior, FTP, sockets, SCGI/XML-RPC/rTorrent,
 uTorrent WebUI, watch folders, external commands, WOL, the local GUI server, application
 updater file replacement, and ruTorrent all require later integration fixtures or
 services. Tracker updater replacement has one controlled offline characterization below.
@@ -201,6 +203,26 @@ directly inspected v290.7.2 asset: SHA-256
 source repository's `master` contained 77 tracker files; the release-only file
 was `Upload.cx.tracker`. Runtime updates intentionally follow the published
 release asset, while the discrepancy remains visible for later packaging work.
+
+## Imported tracker definitions
+
+The repository now contains a canonical `trackers/` source directory. Its
+initial 77 definitions are an unchanged snapshot of
+`mkgeeky/autodl-trackers` commit
+`a91caa41e27ae6b0f542da2ba339a9665c66b023`; `trackers/SOURCE.json` records
+the provenance and count. Individual source contents and license notices are
+preserved. `Upload.cx.tracker`, which existed in the v290.7.2 release archive
+but not in that source commit, is intentionally not imported.
+
+The dedicated `make test-trackers` packaged-Irssi check requires every imported
+file to parse through the production `TrackerXmlParser`, requires all tracker
+types to be unique, reloads them through the production `TrackerManager`, and
+asserts that all 77 remain active. It runs without IRC or external network.
+
+This import establishes one review and test location but does not yet change
+runtime packaging or the updater source. Generating the flat tracker release
+archive from this directory and publishing it from this repository remain
+separate follow-up changes.
 
 ## Confirmed blockers and repository comparison
 

@@ -1,0 +1,81 @@
+<?xml version="1.0"?>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is IRC Auto Downloader.
+   -
+   - The Initial Developer of the Original Code is
+   - David Nilsson.
+   - Portions created by the Initial Developer are Copyright (C) 2010, 2011
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   - Cazeri
+   -
+   - ***** END LICENSE BLOCK ***** -->
+
+<trackerinfo
+	type="tn"
+	shortName="TN"
+	longName="TNetwork"
+	siteName="tntracker.org">
+
+	<settings>
+		<description text="Go to https://tntracker.org/getrss.php to get the RSS feed link. Paste it (Ctrl+V) into the text box below to automatically extract passkey."/>
+		<passkey tooltiptext="The passkey in your TNetwork RSS feed link."/>
+	</settings>
+
+	<servers>
+		<server
+			network="TNetwork"
+			serverNames="irc.tntracker.org"
+			channelNames="#announce"
+			announcerNames="|TN|,[TN]"
+			/>
+	</servers>
+
+	<parseinfo>
+		<multilinepatterns>
+			<!--{New Torrent} Name {Doctor.Who.2005.S02E09.1080p.BluRay.x264-SHORTBREHD} Typ {Serien|Inter} Pre {2 m 34 s}-->
+			<!--{New Torrent} Size {4.044GB} Files {93} Link {https://tntracker.org/torrent/123123}-->
+			<extract>
+				<regex value="^\{New\sTorrent\}\sName\s\{(.*)\}\sTyp\s\{([|a-zA-Z0-9]*)\}(?:\sPre\s\{(.*)\})?$"/>
+				<vars>
+					<var name="torrentName"/>
+					<var name="category"/>
+					<var name="preTime"/>
+				</vars>
+			</extract>
+			<extract>
+				<regex value="^\{New\sTorrent\}\sSize\s\{(.*)\}\sFiles\s\{.*\}\sLink\s\{https?\:\/\/([^\/]+\/).*torrent\/(\d+)"/>
+				<vars>
+					<var name="torrentSize"/>
+					<var name="$baseUrl"/>
+					<var name="$torrentId"/>
+				</vars>
+			</extract>
+		</multilinepatterns>
+		<linematched>
+			<var name="torrentUrl">
+				<string value="https://"/>
+				<var name="$baseUrl"/>
+				<string value="sdownload/"/>
+				<var name="$torrentId"/>
+				<string value="/"/>
+				<varenc name="passkey"/>
+			</var>
+		</linematched>
+		<ignore>
+		</ignore>
+	</parseinfo>
+</trackerinfo>
