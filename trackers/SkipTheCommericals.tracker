@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<trackerinfo
+	type="stc"
+	shortName="STC"
+	longName="skipthecommericals"
+	siteName="skipthecommericals.xyz"
+	follow302links="true"
+>
+	<settings>
+		<description text="Go to STC and click Settings or your profile, copy your RSS keys."/>
+		<passkey tooltiptext="Copy the RSS key from your settings or profile page"/>
+	</settings>
+
+	<servers>
+		<server
+			network="STC"
+			serverNames="irc.skipthecommericals.xyz"
+			channelNames="#announce"
+			announcerNames="STCBOT"
+			/>
+	</servers>
+
+	<parseinfo>
+		<linepatterns>
+			<extract>
+				<!--New Torrent Announcement: Category: [TV Show] Type: [WEB-DL] Name: [Atlanta S04E01 1080p WEB-DL DD+ 5.1 H.264-PLZPROPER] Freeleech: [No] Size: [1.12 GiB] Uploaded By: [micromcv] - https://skipthecommericals.xyz/torrent/download/11042-->				
+				<regex value="New Torrent Announcement: Category: \[([^\]]*)\] Type: \[([^\]]*)\] Name: \[([^\]]*)\] Freeleech: \[([^\]]*)\] Size: \[([^\]]*)\] Uploaded By: \[([^\]]*)\] - https\:\/\/([^\/]+\/).*[download\/](.*)"/>
+				<vars>
+					<var name="category"/>
+					<var name="format"/>
+					<var name="torrentName"/>
+					<var name="$freeleech"/>
+					<var name="$torrentSize"/>
+					<var name="uploader"/>
+					<var name="$baseUrl"/>
+					<var name="$torrentId"/>
+				</vars>
+			</extract>
+		</linepatterns>
+		<linematched>
+			<var name="freeleech">
+				<string value="false"/>
+			</var>
+
+			<setregex srcvar="$freeleech" regex="Yes" varName="freeleech" newValue="true"/>
+			
+			<var name="torrentUrl">
+				<string value="https://"/>
+				<var name="$baseUrl"/>
+				<string value="torrent/download/"/>
+				<var name="$torrentId"/>
+				<string value="."/>
+				<var name="passkey"/>
+			</var>
+		</linematched>
+		<ignore>
+		</ignore>
+	</parseinfo>
+</trackerinfo>

@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   - The Original Code is IRC Auto Downloader.
+   -
+   - The Initial Developer of the Original Code is
+   - David Nilsson.
+   - Portions created by the Initial Developer are Copyright (C) 2010, 2011
+   - the Initial Developer. All Rights Reserved.
+   -
+   - Contributor(s):
+   -
+   - ***** END LICENSE BLOCK ***** -->
+
+<trackerinfo
+	type="uhd"
+	shortName="UHD"
+	longName="UHDBits"
+	siteName="uhdbits.org">
+
+	<settings>
+		<gazelle_description/>
+		<gazelle_authkey/>
+		<gazelle_torrent_pass/>
+	</settings>
+
+	<servers>
+		<server
+			network="P2P-Network"
+			serverNames="irc.p2p-network.net"
+			channelNames="#uhd.announce"
+			announcerNames="uhdAnnounceBot"
+			/>
+	</servers>
+
+	<parseinfo>
+		<linepatterns>
+			<extract>
+				<!--Category [Movie] Blind [2014] Blind 2014 720p BluRay DD5.1 x264-VietHD.mkv [720p, Encode, Freeleech, mkv] Size [6.68 GB] Url [https://uhdbits.org/torrents.php?action=download&id=67576]-->
+				<regex value="Category \[(.+)\] .+ \[(\d+)\] (.+) \[(.+)\] Size \[(.+)\] Url \[(https?:\/\/.*id=\d+)\]"/>
+				<vars>
+					<var name="category"/>
+					<var name="year"/>
+					<var name="torrentName"/>
+					<var name="releaseTags"/>
+					<var name="$torrentSize"/>
+					<var name="$baseUrl"/>
+				</vars>
+			</extract>
+		</linepatterns>
+		<linematched>
+			<var name="freeleech">
+				<string value="false"/>
+			</var>
+			<setregex srcvar="$freeleech" regex="Yes" varName="freeleech" newValue="true"/>
+
+			<extracttags srcvar="$releaseTags" split=",">
+				<setvarif varName="category" regex="^(?:Movie|TV|Music)$"/>
+				<setvarif varName="resolution" regex="^(?:mHD|720p|1080p|1080i|2160p|4K)$"/>
+				<setvarif varName="source" regex="^(?:HDTV|BluRay|Blu\-Ray|WEB\-DL|WEBRip|HDRip|HDAudio|HD\ DVD)$"/>
+
+				<!--Ignored-->
+				<regex value=""/>
+			</extracttags>
+
+			<var name="torrentUrl">
+				<var name="$baseUrl"/>
+				<string value="&amp;authkey="/>
+				<var name="authkey"/>
+				<string value="&amp;torrent_pass="/>
+				<var name="torrent_pass"/>
+			</var>
+		</linematched>
+		<ignore>
+			<regex value="action=download&amp;id=" expected="false"/>
+		</ignore>
+	</parseinfo>
+</trackerinfo>

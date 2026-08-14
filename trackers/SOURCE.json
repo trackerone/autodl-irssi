@@ -1,0 +1,9 @@
+{
+  "upstream": "https://github.com/mkgeeky/autodl-trackers",
+  "commit": "a91caa41e27ae6b0f542da2ba339a9665c66b023",
+  "imported_on": "2026-08-14",
+  "tracker_files": 77,
+  "release_only_files_not_imported": [
+    "Upload.cx.tracker"
+  ]
+}
