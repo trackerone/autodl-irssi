@@ -35,9 +35,9 @@ is kept under `~/.autodl`: `autodl.cfg`, optional `autodl2.cfg`,
 The in-process updater queries the GitHub releases APIs for the application and
 tracker definitions, downloads release ZIP archives, and replaces files. Auto
 update is the configuration default. Application updates retain the historical
-`autodl-community/autodl-irssi` source. Tracker updates use the newer
-`mkgeeky/autodl-trackers` release line and consume the asset URL returned by the
-GitHub release metadata instead of reconstructing a historical filename.
+`autodl-community/autodl-irssi` source. Tracker updates list releases from
+`trackerone/autodl-irssi`, select stable `trackers-v...` tags, and consume the
+asset URL returned by GitHub release metadata.
 
 ## Repeatable Ubuntu 24.04 baseline
 
@@ -185,14 +185,13 @@ permissions, symlink layout, or installation path, establish a root cause, or
 propose a fix. No production updater, tracker manager, or path behavior is
 changed by the characterization.
 
-## Newer tracker release source
+## Historical tracker release source
 
-The tracker updater now checks `mkgeeky/autodl-trackers`, whose latest observed
-release is v290.7.2, instead of the inactive `autodl-community/autodl-trackers`
-v284 release line. The release parser requires an asset named from the reported
-version (`v290.7.2.zip` for that release) and uses its API-provided
-`browser_download_url`. A missing expected asset is reported as an update-data
-parse error before any installed tracker files are touched.
+Before consolidation, the tracker updater was moved from the inactive
+`autodl-community/autodl-trackers` v284 line to
+`mkgeeky/autodl-trackers`, whose latest observed release was v290.7.2. That
+release parser required an asset named from the reported version
+(`v290.7.2.zip`) and used its API-provided `browser_download_url`.
 
 The offline integration fixture exercises the production release parser,
 version check, download callback, archive extraction, replacement, and tracker
@@ -201,28 +200,35 @@ directly inspected v290.7.2 asset: SHA-256
 `22fcabf78b9b2034a0c9f022b2cdfcfa4b2d52b9b2088b2aedee42b96b6177b5`,
 78 unique `.tracker` members, and no directory prefixes. At inspection time the
 source repository's `master` contained 77 tracker files; the release-only file
-was `Upload.cx.tracker`. Runtime updates intentionally follow the published
-release asset, while the discrepancy remains visible for later packaging work.
+was `Upload.cx.tracker`. This external release is retained only as migration
+provenance and a historical manifest fixture.
 
 ## Imported tracker definitions
 
 The repository now contains a canonical `trackers/` source directory. Its
-initial 77 definitions are an unchanged snapshot of
-`mkgeeky/autodl-trackers` commit
+initial 77 definitions were imported from `mkgeeky/autodl-trackers` commit
 `a91caa41e27ae6b0f542da2ba339a9665c66b023`; `trackers/SOURCE.json` records
-the provenance and count. Individual source contents and license notices are
-preserved. `Upload.cx.tracker`, which existed in the v290.7.2 release archive
-but not in that source commit, is intentionally not imported.
+the provenance, count, and two parser-compatibility repairs. Individual license
+notices are preserved. `Upload.cx.tracker`, which existed in the v290.7.2
+release archive but not in that source commit, is intentionally not imported.
 
 The dedicated `make test-trackers` packaged-Irssi check requires every imported
 file to parse through the production `TrackerXmlParser`, requires all tracker
 types to be unique, reloads them through the production `TrackerManager`, and
 asserts that all 77 remain active. It runs without IRC or external network.
 
-This import establishes one review and test location but does not yet change
-runtime packaging or the updater source. Generating the flat tracker release
-archive from this directory and publishing it from this repository remain
-separate follow-up changes.
+`trackers/VERSION` identifies the fork-owned tracker release. The shared
+`scripts/build-tracker-release.sh` builder creates a deterministic flat ZIP,
+verifies its 77 names and contents, and writes a SHA-256 checksum. CI runs the
+builder twice and requires byte-identical output. The `Publish tracker release`
+workflow publishes the same output under `trackers-v<VERSION>` either by manual
+dispatch or a matching tag push.
+
+The production updater now lists releases from `trackerone/autodl-irssi` and
+chooses the newest non-draft, non-prerelease `trackers-v...` entry. This prefix
+keeps tracker and application releases unambiguous in one repository. The
+offline updater fixture includes both release kinds plus a tracker prerelease,
+then verifies metadata selection, archive replacement, and tracker reload.
 
 ## Confirmed blockers and repository comparison
 

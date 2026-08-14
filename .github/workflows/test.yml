@@ -41,9 +41,11 @@ jobs:
         run: make test-tracker-update
       - name: Validate imported tracker definitions
         run: make test-trackers
+      - name: Build and verify tracker release package
+        run: make test-tracker-package
       - name: Build development image
         run: docker build -t autodl-irssi-dev .
       - name: Run development image checks
         run: docker run --rm --network none autodl-irssi-dev
       - name: Validate workflow YAML
-        run: ruby -e "require 'yaml'; YAML.load_file('.github/workflows/test.yml'); puts 'Workflow YAML is valid'"
+        run: ruby -e "require 'yaml'; Dir['.github/workflows/*.{yml,yaml}'].each { |file| YAML.load_file(file); puts \"#{file} is valid\" }"

@@ -42,7 +42,7 @@ use File::Copy;
 use Archive::Zip qw/ :ERROR_CODES /;
 use constant {
 	AUTODL_UPDATE_URL => 'https://api.github.com/repos/autodl-community/autodl-irssi/releases/latest',
-	TRACKERS_UPDATE_URL => 'https://api.github.com/repos/mkgeeky/autodl-trackers/releases/latest',
+	TRACKERS_UPDATE_URL => 'https://api.github.com/repos/trackerone/autodl-irssi/releases?per_page=100',
 	UPDATE_USER_AGENT => 'autodl-irssi',
 };
 
@@ -51,6 +51,7 @@ sub new {
 	bless {
 		handler => undef,
 		request => undef,
+		updateKind => undef,
 		githubToken => $AutodlIrssi::g->{options}{githubToken},
 	}, $class;
 }
@@ -79,6 +80,7 @@ sub _notifyHandler {
 		# Clean up before calling the handler
 		$self->{handler} = undef;
 		$self->{request} = undef;
+		$self->{updateKind} = undef;
 
 		if (defined $handler) {
 			$handler->($errorMessage);
@@ -137,11 +139,18 @@ sub _parseAutodlUpdate {
 }
 
 sub _parseTrackersUpdate {
-	my ($self, $trackersData) = @_;
+	my ($self, $releases) = @_;
+
+	die "Invalid trackers release list\n" unless ref $releases eq 'ARRAY';
+	my ($trackersData) = grep {
+		!$_->{draft} && !$_->{prerelease} &&
+		defined $_->{tag_name} && $_->{tag_name} =~ /^trackers-v\d+(?:\.\d+)*$/
+	} @$releases;
+	die "Could not find a stable trackers release\n" unless $trackersData;
 
 	my $trackersVersion = $trackersData->{tag_name};
-	$trackersVersion =~ s/.*v//;
-	my $trackersAssetName = "v$trackersVersion.zip";
+	$trackersVersion =~ s/^trackers-v//;
+	my $trackersAssetName = "autodl-trackers-v$trackersVersion.zip";
 	my ($trackersAsset) = grep {
 		defined $_->{name} && $_->{name} eq $trackersAssetName
 	} @{$trackersData->{assets} || []};
@@ -166,6 +175,7 @@ sub checkAutodlUpdate {
 	die "Already checking for updates\n" if $self->_isChecking();
 
 	$self->{handler} = $handler || sub {};
+	$self->{updateKind} = 'autodl';
 	$self->_createHttpRequest();
 
 	$self->{updateUrl} = AUTODL_UPDATE_URL;
@@ -187,6 +197,7 @@ sub checkTrackersUpdate {
 	die "Already checking for updates\n" if $self->_isChecking();
 
 	$self->{handler} = $handler || sub {};
+	$self->{updateKind} = 'trackers';
 	$self->_createHttpRequest();
 
 	$self->{updateUrl} = TRACKERS_UPDATE_URL;
@@ -203,6 +214,7 @@ sub checkTrackersUpdate {
 
 sub _onRequestReceived {
 	my ($self, $errorMessage) = @_;
+	my $updateKind = $self->{updateKind};
 
 	eval {
 		return $self->_error("Error getting update info: $errorMessage") if $errorMessage;
@@ -214,22 +226,28 @@ sub _onRequestReceived {
 
 		my $jsonData = decodeJson($self->{request}->getResponseData());
 
-		if ($self->{request}{url} =~ /autodl-irssi/) {
+		if ($updateKind && $updateKind eq 'autodl') {
 			$self->_parseAutodlUpdate($jsonData);
 		}
-		elsif ($self->{request}{url} =~ /autodl-trackers/) {
+		elsif ($updateKind && $updateKind eq 'trackers') {
 			$self->_parseTrackersUpdate($jsonData);
+		}
+		else {
+			die "Unknown update kind\n";
 		}
 
 		$self->_notifyHandler("");
 	};
 	if ($@) {
 		chomp $@;
-		if ($self->{request}{url} =~ /autodl-irssi/) {
+		if ($updateKind && $updateKind eq 'autodl') {
 			$self->_error("Could not parse autodl update data: $@");
 		}
-		elsif ($self->{request}{url} =~ /autodl-trackers/) {
+		elsif ($updateKind && $updateKind eq 'trackers') {
 			$self->_error("Could not parse trackers update data: $@");
+		}
+		else {
+			$self->_error("Could not parse update data: $@");
 		}
 	}
 }

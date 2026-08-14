@@ -1,0 +1,63 @@
+name: Publish tracker release
+
+on:
+  push:
+    tags:
+      - 'trackers-v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-trackers
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: github.repository == 'trackerone/autodl-irssi' && (github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-24.04
+    steps:
+      # actions/checkout v5.0.0 (Node.js 24)
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      - name: Install validation and packaging dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential ca-certificates cpanminus irssi libssl-dev \
+            libio-socket-ssl-perl libnet-ssleay-perl libxml2-dev \
+            unzip zip zlib1g-dev
+      - name: Install Perl dependencies from cpanfile
+        run: sudo cpanm --mirror https://cpan.metacpan.org --mirror-only --notest --installdeps .
+      - name: Resolve release version
+        id: release
+        shell: bash
+        run: |
+          version=$(<trackers/VERSION)
+          tag="trackers-v${version}"
+          if [[ "${GITHUB_EVENT_NAME}" == push && "${GITHUB_REF_NAME}" != "${tag}" ]]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match trackers/VERSION (${version})." >&2
+            exit 1
+          fi
+          echo "version=${version}" >>"${GITHUB_OUTPUT}"
+          echo "tag=${tag}" >>"${GITHUB_OUTPUT}"
+      - name: Validate definitions and deterministic package
+        run: make test-trackers test-tracker-package
+      - name: Build release archive
+        run: ./scripts/build-tracker-release.sh dist
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.release.outputs.version }}
+          TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
+        run: |
+          args=("${TAG}" --title "autodl-trackers v${VERSION}" --generate-notes)
+          if [[ "${GITHUB_EVENT_NAME}" == workflow_dispatch ]]; then
+            args+=(--target "${GITHUB_SHA}")
+          else
+            args+=(--verify-tag)
+          fi
+          gh release create "${args[@]}" \
+            "dist/autodl-trackers-v${VERSION}.zip" \
+            "dist/autodl-trackers-v${VERSION}.zip.sha256"

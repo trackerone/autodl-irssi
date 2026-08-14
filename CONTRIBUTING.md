@@ -29,7 +29,9 @@ Each commit should encompass the smallest logical changeset (e.g. changing two u
 
 ## Trackers
 
-Please make all tracker bug reports, requests, and modifications to the [autodl-trackers](https://github.com/autodl-community/autodl-trackers) repository.
+Tracker definitions live in this repository's [`trackers/`](trackers)
+directory. Please submit tracker bug reports, requests, and modifications here
+so parser validation and release packaging run in the same pull request.
 
 ## ruTorrent plugin
 

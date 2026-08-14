@@ -20,6 +20,13 @@ Imported files retain their original attribution and any individual license
 notices. Future changes in this repository should preserve applicable
 notices and explain the tracker behavior being changed.
 
-The current runtime updater still consumes published tracker releases. Building
-those release artifacts from this directory and moving the updater to this
-repository are separate follow-up changes.
+`VERSION` is the release version for this directory. Run
+`scripts/build-tracker-release.sh` to create a deterministic, flat archive named
+`autodl-trackers-v<VERSION>.zip` plus its SHA-256 checksum. The builder rejects
+count mismatches and verifies every archived file against this directory.
+
+The `Publish tracker release` workflow publishes those files under a
+`trackers-v<VERSION>` tag. It can be started manually after changing `VERSION`,
+or by pushing the matching tag. The runtime updater lists releases from this
+repository and selects the newest stable `trackers-v...` release, independently
+of application releases in the same repository.
