@@ -7,6 +7,7 @@ use File::Spec;
 use File::Temp qw/ tempfile /;
 use Irssi;
 use AutodlIrssi::Dirs;
+use AutodlIrssi::InternetUtils qw/ decodeJson /;
 use AutodlIrssi::Updater;
 
 our $VERSION = '1.0';
@@ -82,6 +83,9 @@ die "AUTODL_TRACKER_UPDATE_FIXTURE_DIR is required\n"
 
 my $updated_data = slurp_file(File::Spec->catfile($fixture_dir, 'updated.tracker'));
 my $added_data = slurp_file(File::Spec->catfile($fixture_dir, 'added.tracker'));
+my $release_data = decodeJson(slurp_file(
+	File::Spec->catfile($fixture_dir, 'v290.7.2-release.json')
+));
 my $zip_data = build_release_zip($updated_data, $added_data);
 my $tracker_dir = getTrackerFilesDir();
 my $callback_count = 0;
@@ -89,10 +93,28 @@ my $callback_error;
 
 Irssi::print('TRACKERUPDATE:DRIVER_STARTED');
 my $updater = TrackerUpdateFixtureUpdater->new($zip_data);
-$updater->{trackers} = {
-	version => '284',
-	url => 'https://offline.invalid/autodl-trackers-v284.zip',
-};
+die "Unexpected trackers release API URL\n"
+	unless AutodlIrssi::Updater::TRACKERS_UPDATE_URL()
+		eq 'https://api.github.com/repos/mkgeeky/autodl-trackers/releases/latest';
+
+my %missing_asset_data = %$release_data;
+$missing_asset_data{assets} = [];
+eval { $updater->_parseTrackersUpdate(\%missing_asset_data); };
+die "Missing release asset was not rejected\n" unless $@;
+die "Unexpected missing release asset error: $@"
+	unless $@ eq "Could not find trackers release asset 'v290.7.2.zip'\n";
+
+$updater->_parseTrackersUpdate($release_data);
+die "Unexpected trackers version\n" unless $updater->getTrackersVersion() eq '290.7.2';
+die "Updated trackers version was not detected\n" unless $updater->hasTrackersUpdate('284');
+die "Unexpected trackers release asset URL\n"
+	unless $updater->{trackers}{url}
+		eq 'https://github.com/mkgeeky/autodl-trackers/releases/download/v290.7.2/v290.7.2.zip';
+Irssi::print('TRACKERUPDATE:SOURCE:mkgeeky/autodl-trackers');
+Irssi::print('TRACKERUPDATE:VERSION:290.7.2');
+Irssi::print('TRACKERUPDATE:ASSET:v290.7.2.zip');
+Irssi::print('TRACKERUPDATE:MISSING_ASSET_REJECTED');
+
 $updater->updateTrackers($tracker_dir, sub {
 	($callback_error) = @_;
 	$callback_count++;

@@ -34,8 +34,10 @@ is kept under `~/.autodl`: `autodl.cfg`, optional `autodl2.cfg`,
 
 The in-process updater queries the GitHub releases APIs for the application and
 tracker definitions, downloads release ZIP archives, and replaces files. Auto
-update is the configuration default. This mechanism is documented here but is
-intentionally not exercised or changed by the baseline.
+update is the configuration default. Application updates retain the historical
+`autodl-community/autodl-irssi` source. Tracker updates use the newer
+`mkgeeky/autodl-trackers` release line and consume the asset URL returned by the
+GitHub release metadata instead of reconstructing a historical filename.
 
 ## Repeatable Ubuntu 24.04 baseline
 
@@ -180,6 +182,25 @@ archive in the repository, reproduce the reporter's filesystem ownership,
 permissions, symlink layout, or installation path, establish a root cause, or
 propose a fix. No production updater, tracker manager, or path behavior is
 changed by the characterization.
+
+## Newer tracker release source
+
+The tracker updater now checks `mkgeeky/autodl-trackers`, whose latest observed
+release is v290.7.2, instead of the inactive `autodl-community/autodl-trackers`
+v284 release line. The release parser requires an asset named from the reported
+version (`v290.7.2.zip` for that release) and uses its API-provided
+`browser_download_url`. A missing expected asset is reported as an update-data
+parse error before any installed tracker files are touched.
+
+The offline integration fixture exercises the production release parser,
+version check, download callback, archive extraction, replacement, and tracker
+reload without contacting either repository. A committed manifest records the
+directly inspected v290.7.2 asset: SHA-256
+`22fcabf78b9b2034a0c9f022b2cdfcfa4b2d52b9b2088b2aedee42b96b6177b5`,
+78 unique `.tracker` members, and no directory prefixes. At inspection time the
+source repository's `master` contained 77 tracker files; the release-only file
+was `Upload.cx.tracker`. Runtime updates intentionally follow the published
+release asset, while the discrepancy remains visible for later packaging work.
 
 ## Confirmed blockers and repository comparison
 

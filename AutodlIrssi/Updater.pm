@@ -42,7 +42,7 @@ use File::Copy;
 use Archive::Zip qw/ :ERROR_CODES /;
 use constant {
 	AUTODL_UPDATE_URL => 'https://api.github.com/repos/autodl-community/autodl-irssi/releases/latest',
-	TRACKERS_UPDATE_URL => 'https://api.github.com/repos/autodl-community/autodl-trackers/releases/latest',
+	TRACKERS_UPDATE_URL => 'https://api.github.com/repos/mkgeeky/autodl-trackers/releases/latest',
 	UPDATE_USER_AGENT => 'autodl-irssi',
 };
 
@@ -139,9 +139,15 @@ sub _parseAutodlUpdate {
 sub _parseTrackersUpdate {
 	my ($self, $trackersData) = @_;
 
-	my $trackersTagName = my $trackersVersion = $trackersData->{tag_name};
+	my $trackersVersion = $trackersData->{tag_name};
 	$trackersVersion =~ s/.*v//;
-	my $trackersDownloadUrl = "https://github.com/autodl-community/autodl-trackers/releases/download/$trackersTagName/autodl-trackers-v$trackersVersion.zip";
+	my $trackersAssetName = "v$trackersVersion.zip";
+	my ($trackersAsset) = grep {
+		defined $_->{name} && $_->{name} eq $trackersAssetName
+	} @{$trackersData->{assets} || []};
+	die "Could not find trackers release asset '$trackersAssetName'\n"
+		unless $trackersAsset && $trackersAsset->{browser_download_url};
+	my $trackersDownloadUrl = $trackersAsset->{browser_download_url};
 	my $trackersChangeLog = $trackersData->{body};
 
 	$self->{trackers} = {

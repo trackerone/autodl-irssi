@@ -64,6 +64,10 @@ assert_count() {
 }
 assert_count 'TRACKERUPDATE:IRSSI_STARTED_OFFLINE' "$window_log" 1
 assert_count 'TRACKERUPDATE:DRIVER_STARTED' "$window_log" 1
+assert_count 'TRACKERUPDATE:SOURCE:mkgeeky/autodl-trackers' "$window_log" 1
+assert_count 'TRACKERUPDATE:VERSION:290.7.2' "$window_log" 1
+assert_count 'TRACKERUPDATE:ASSET:v290.7.2.zip' "$window_log" 1
+assert_count 'TRACKERUPDATE:MISSING_ASSET_REJECTED' "$window_log" 1
 assert_count 'TRACKERUPDATE:FINAL_CALLBACK:1:' "$window_log" 1
 assert_count 'TRACKERUPDATE:FILES:added.tracker,current.tracker' "$window_log" 1
 assert_count 'TRACKERUPDATE:LOADED_TYPES:added-fixture,updated-fixture' "$window_log" 1
