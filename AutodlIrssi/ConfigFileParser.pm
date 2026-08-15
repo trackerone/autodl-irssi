@@ -32,13 +32,18 @@ use warnings;
 
 package AutodlIrssi::ConfigFileParser;
 use AutodlIrssi::TextUtils;
-use AutodlIrssi::Globals;
 
 sub new {
-	my $class = shift;
+	my ($class, $diagnosticHandler) = @_;
 	bless {
 		headers => {},
+		diagnostics => [],
+		diagnosticHandler => $diagnosticHandler,
 	}, $class;
+}
+
+sub getDiagnostics {
+	return shift->{diagnostics};
 }
 
 # Parses a file and returns a hash of all headers. The key is the header type (lower case), and
@@ -98,7 +103,9 @@ sub parse {
 sub error {
 	my ($self, $lineNumber, $msg) = @_;
 
-	message 0, "$self->{pathname}: line $lineNumber: $msg";
+	my $diagnostic = "$self->{pathname}: line $lineNumber: $msg";
+	push @{$self->{diagnostics}}, $diagnostic;
+	$self->{diagnosticHandler}->($diagnostic) if defined $self->{diagnosticHandler};
 }
 
 1;

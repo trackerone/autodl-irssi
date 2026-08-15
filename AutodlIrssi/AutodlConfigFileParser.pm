@@ -111,9 +111,9 @@ sub _convertPriority {
 }
 
 sub new {
-	my ($class, $trackerManager) = @_;
+	my ($class, $trackerManager, $diagnosticHandler) = @_;
 
-	my $self = $class->SUPER::new();
+	my $self = $class->SUPER::new($diagnosticHandler);
 
 	$self->{trackerManager} = $trackerManager;
 	$self->{filters} = [];

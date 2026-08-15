@@ -316,7 +316,9 @@ sub parseConfigFile {
 
 	return unless -f $fileInfo->{filename};
 
-	my $configFileParser = new AutodlIrssi::AutodlConfigFileParser($trackerManager);
+	my $configFileParser = new AutodlIrssi::AutodlConfigFileParser($trackerManager, sub {
+		message 0, shift;
+	});
 	$configFileParser->parse($fileInfo->{filename});
 	return $configFileParser;
 }
