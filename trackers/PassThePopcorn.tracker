@@ -48,6 +48,28 @@
 	<parseinfo>
 		<linepatterns>
 			<extract>
+				<!--0:2:0:0:357805:1332009:9k6p:tt24249072:1899875175:1728081334|H.264/MKV/WEB/720p||2023|Last Straw|Last.Straw.2023.REPACK.720p.AMZN.WEB-DL.DDP5.1.H.264-FLUX|thriller,horror-->
+				<regex value="^([0-9]):([0-9]):([0-9]):([0-9]):([0-9]+):([0-9]+):(\w+):(tt[0-9]+)?:([0-9]+):([0-9]+)\|([^|]*)\|([^|]*)\|([0-9]{4})\|([^|]*)\|([^|]+)\|(.*)$"/>
+				<vars>
+					<var name="$announceType"/>
+					<var name="$categoryType"/>
+					<var name="$originType"/>
+					<var name="$freeleechType"/>
+					<var name="$groupId"/>
+					<var name="$torrentId"/>
+					<var name="$ptpKey"/>
+					<var name="$imdbId"/>
+					<var name="torrentSize"/>
+					<var name="$uploadedAt"/>
+					<var name="$releaseTags"/>
+					<var name="$editionTags"/>
+					<var name="year"/>
+					<var name="name1"/>
+					<var name="torrentName"/>
+					<var name="tags"/>
+				</vars>
+			</extract>
+			<extract>
 				<!--Irene Huss - Nattrond AKA The Night Round [2008] by Anders Engström - XviD / DVD / AVI / 640x352 - http://passthepopcorn.me/torrents.php?id=51627 / http://passthepopcorn.me/torrents.php?action=download&id=97333 - crime, drama, mystery-->
 				<!--Dirty Rotten Scoundrels [1988] by Frank Oz - x264 / Blu-ray / MKV / 720p - http://passthepopcorn.me/torrents.php?id=10735 / http://passthepopcorn.me/torrents.php?action=download&id=97367 - comedy, crime-->
 				<regex value="^(.*)-\s*https?:.*[&amp;\?]id=.*https?\:\/\/([^\/]+\/).*[&amp;\?]id=(\d+)\s*-\s*(.*)"/>
@@ -63,6 +85,43 @@
 			<var name="scene">
 				<string value="false"/>
 			</var>
+			<var name="freeleech">
+				<string value="false"/>
+			</var>
+
+			<if srcvar="$categoryType" regex="^1$">
+				<var name="category"><string value="Feature Film"/></var>
+			</if>
+			<if srcvar="$categoryType" regex="^2$">
+				<var name="category"><string value="Short Film"/></var>
+			</if>
+			<if srcvar="$categoryType" regex="^3$">
+				<var name="category"><string value="Miniseries"/></var>
+			</if>
+			<if srcvar="$categoryType" regex="^4$">
+				<var name="category"><string value="Stand-up Comedy"/></var>
+			</if>
+			<if srcvar="$categoryType" regex="^5$">
+				<var name="category"><string value="Live Performance"/></var>
+			</if>
+			<if srcvar="$categoryType" regex="^6$">
+				<var name="category"><string value="Movie Collection"/></var>
+			</if>
+
+			<if srcvar="$originType" regex="^0$">
+				<var name="origin"><string value="P2P"/></var>
+			</if>
+			<if srcvar="$originType" regex="^1$">
+				<var name="origin"><string value="Scene"/></var>
+				<var name="scene"><string value="true"/></var>
+			</if>
+			<if srcvar="$originType" regex="^2$">
+				<var name="origin"><string value="Internal"/></var>
+			</if>
+
+			<if srcvar="$freeleechType" regex="^(?:1|3)$">
+				<var name="freeleech"><string value="true"/></var>
+			</if>
 
 			<extract srcvar="torrentName" optional="true">
 				<regex value="by (.*) - (\S+ /.*)"/>
@@ -110,16 +169,31 @@
 				<regex value=""/>
 			</extracttags>
 
-			<var name="torrentUrl">
-				<string value="https://"/>
-				<var name="$baseUrl"/>
-				<string value="torrents.php?action=download&amp;id="/>
-				<var name="$torrentId"/>
-				<string value="&amp;authkey="/>
-				<var name="authkey"/>
-				<string value="&amp;torrent_pass="/>
-				<var name="torrent_pass"/>
-			</var>
+			<if srcvar="$ptpKey" regex=".+">
+				<var name="torrentUrl">
+					<string value="https://passthepopcorn.me/torrents.php?action=download&amp;id="/>
+					<var name="$torrentId"/>
+					<string value="&amp;authkey="/>
+					<var name="authkey"/>
+					<string value="&amp;torrent_pass="/>
+					<var name="torrent_pass"/>
+					<string value="&amp;key="/>
+					<var name="$ptpKey"/>
+				</var>
+			</if>
+
+			<if srcvar="$baseUrl" regex=".+">
+				<var name="torrentUrl">
+					<string value="https://"/>
+					<var name="$baseUrl"/>
+					<string value="torrents.php?action=download&amp;id="/>
+					<var name="$torrentId"/>
+					<string value="&amp;authkey="/>
+					<var name="authkey"/>
+					<string value="&amp;torrent_pass="/>
+					<var name="torrent_pass"/>
+				</var>
+			</if>
 		</linematched>
 		<ignore>
 		</ignore>

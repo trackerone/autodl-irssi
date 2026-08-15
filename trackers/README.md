@@ -15,6 +15,8 @@ Two source files required minimal parser-compatibility repairs: HUNO's custom
 RSS-key setting and line-matched operations were expressed using unsupported
 tags, and LustHive used `name` instead of `value` on one string fragment. These
 repairs are recorded in `SOURCE.json` and validated by the production parser.
+The subsequent release-readiness audit and the reviewed PTP/nCore deltas are
+recorded in [`AUDIT.md`](AUDIT.md).
 
 Imported files retain their original attribution and any individual license
 notices. Future changes in this repository should preserve applicable
