@@ -12,6 +12,8 @@ RUN apt-get update \
       libnet-ssleay-perl \
       libssl-dev \
       libxml2-dev \
+      unzip \
+      zip \
       zlib1g-dev \
  && rm -rf /var/lib/apt/lists/*
 

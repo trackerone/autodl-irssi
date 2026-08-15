@@ -1,0 +1,35 @@
+[
+  {
+    "tag_name": "v2.6.3",
+    "draft": false,
+    "prerelease": false,
+    "body": "Application release that must not be selected as tracker metadata.",
+    "assets": []
+  },
+  {
+    "tag_name": "trackers-v999.0",
+    "draft": false,
+    "prerelease": true,
+    "body": "Prerelease tracker package that stable clients must ignore.",
+    "assets": []
+  },
+  {
+    "tag_name": "trackers-v291.0",
+    "draft": false,
+    "prerelease": false,
+    "body": "First tracker release published from trackerone/autodl-irssi.",
+    "assets": [
+      {
+        "name": "autodl-trackers-v291.0.zip",
+        "browser_download_url": "https://github.com/trackerone/autodl-irssi/releases/download/trackers-v291.0/autodl-trackers-v291.0.zip"
+      }
+    ]
+  },
+  {
+    "tag_name": "trackers-v290.7.2",
+    "draft": false,
+    "prerelease": false,
+    "body": "Older compatible tracker release.",
+    "assets": []
+  }
+]
