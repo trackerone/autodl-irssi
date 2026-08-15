@@ -215,7 +215,17 @@ release archive but not in that source commit, is intentionally not imported.
 The dedicated `make test-trackers` packaged-Irssi check requires every imported
 file to parse through the production `TrackerXmlParser`, requires all tracker
 types to be unique, reloads them through the production `TrackerManager`, and
-asserts that all 77 remain active. It runs without IRC or external network.
+asserts that all 77 remain active. It also parses representative current
+PassThePopcorn and nCore announcements and verifies their extracted metadata
+and authenticated download URLs. It runs without IRC or external network.
+
+The 2026-08-15 release-readiness audit reviewed the remaining upstream tracker
+reports. PassThePopcorn's compact pipe-delimited announcement format is now
+supported alongside the historical format. nCore now uses the tracker-owned
+`irc.ncore.pro` endpoint published by nCore's own definition, and its announced
+size populates the production size field. `trackers/AUDIT.md` records the
+evidence and test boundary. The audit does not change `trackers/VERSION`, create
+a tag, or publish a release.
 
 `trackers/VERSION` identifies the fork-owned tracker release. The shared
 `scripts/build-tracker-release.sh` builder creates a deterministic flat ZIP,

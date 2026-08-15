@@ -25,7 +25,7 @@
 
 <trackerinfo
 	type="nc"
-	shortName="nc"
+	shortName="nC"
 	longName="nCore"
 	siteName="ncore.pro">
 
@@ -37,7 +37,7 @@
 	<servers>
 		<server
 			network="P2P-NET"
-			serverNames="irc.p2p-network.net"
+			serverNames="irc.ncore.pro"
 			channelNames="#ncore-bot"
 			announcerNames="nCore"
 			/>
@@ -46,12 +46,12 @@
 	<parseinfo>
 		<linepatterns>
 			<extract>
-				<!--[NEW TORRENT in xvidser_hun] The.Scooby-Doo.Show.S02.WEB-DL.HUN.ENG.x264-DenZo > 2.33 GB in 10F > https://ncore.pro/torrents.php?action=details&id=1843212-->
+				<!--[NEW TORRENT in hdser_hun] Sherlock.S01-S04.COMPLETE.1080p.BluRay.DD5.1.x264.HUN.ENG-pcroland > 227.97 GiB in 46F > https://ncore.pro/torrents.php?action=details&id=3119161-->
 				<regex value="\[NEW TORRENT in (.*)\] (.*) > (.*) in .* > (https?://ncore.pro.*action=).*id=(.*)"/>
 				<vars>
 					<var name="category"/>
 					<var name="torrentName"/>
-					<var name="$torrentSize"/>
+					<var name="torrentSize"/>
 					<var name="$baseUrl"/>
 					<var name="$torrentId"/>
 				</vars>

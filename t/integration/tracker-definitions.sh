@@ -72,6 +72,8 @@ assert_count 'TRACKERDEFS:FILES:77' "$window_log" 1
 assert_count 'TRACKERDEFS:PARSED:77' "$window_log" 1
 assert_count 'TRACKERDEFS:UNIQUE_TYPES:77' "$window_log" 1
 assert_count 'TRACKERDEFS:RELOADED:77' "$window_log" 1
+assert_count 'TRACKERDEFS:PTP_ANNOUNCE_CONFIRMED' "$window_log" 1
+assert_count 'TRACKERDEFS:NCORE_ANNOUNCE_CONFIRMED' "$window_log" 1
 assert_count 'TRACKERDEFS:VALIDATION_CONFIRMED' "$window_log" 1
 assert_count 'TRACKERDEFS:SETTLE_COMPLETE' "$window_log" 1
 
@@ -80,4 +82,4 @@ if grep -Eiq 'could not parse.*\.tracker|segmentation fault|core dumped|uncaught
 	exit 1
 fi
 
-printf '%s\n' 'Offline tracker definition validation passed: 77 files parsed, unique, and reloaded.'
+printf '%s\n' 'Offline tracker definition validation passed: 77 files parsed, unique, reloaded, and current PTP/nCore announces matched.'
