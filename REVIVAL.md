@@ -242,6 +242,20 @@ release, a TV title whose 2005 year must remain in the title, and the century
 boundaries. This core fix does not change `VERSION`, create a tag, or publish a
 release.
 
+## Configuration parser fixtures
+
+Configuration diagnostics are now owned by `ConfigFileParser` instead of being
+sent directly through `Globals` and Irssi. Callers can inspect the collected
+diagnostics, and the production startup path injects the existing error-message
+handler so runtime output is unchanged. This lets the config parser and its
+`AutodlConfigFileParser` subclass load and run without an Irssi process.
+
+Deterministic fixtures characterize option conversion, filter construction,
+server/channel normalization, source line diagnostics, unknown input, bare
+wildcards, and invalid upload types. The existing tracker-definition integration
+continues to cover production tracker XML and representative announce parsing.
+No version, tag, or release is created by these tests.
+
 `trackers/VERSION` identifies the fork-owned tracker release. The shared
 `scripts/build-tracker-release.sh` builder creates a deterministic flat ZIP,
 verifies its 77 names and contents, and writes a SHA-256 checksum. CI runs the
@@ -314,8 +328,9 @@ These observations are review prompts, not reproduced vulnerabilities:
 
 1. Build minimal offline reproducers for the recorded upstream reports before
    considering fixes.
-2. Isolate configuration diagnostics from Globals/Irssi and characterize config,
-   filter, tracker XML, and announce parsing with fixtures.
+2. Configuration diagnostics are isolated from Globals/Irssi, with fixture
+   coverage for config and filter parsing. Tracker XML and representative
+   announce parsing are covered by the tracker-definition integration.
 3. Build local-only fake servers for HTTP/TLS/socket and SCGI/XML-RPC behavior.
 4. Only after those tests exist, address HTTP/TLS/socket and updater findings in
    separate, narrowly scoped changes, followed by rTorrent and ruTorrent
