@@ -1,5 +1,6 @@
 requires 'perl', '5.038';
 requires 'Archive::Zip';
+requires 'Digest::SHA';
 requires 'HTML::Entities';
 requires 'JSON';
 requires 'Net::SSLeay';

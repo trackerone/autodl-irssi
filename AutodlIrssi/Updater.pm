@@ -37,8 +37,13 @@ use AutodlIrssi::FileUtils;
 use AutodlIrssi::HttpRequest;
 use AutodlIrssi::InternetUtils qw/ decodeJson /;
 use AutodlIrssi::Dirs;
+use AutodlIrssi::TrackerXmlParser;
+use Digest::SHA qw/ sha256_hex /;
+use File::Basename qw/ dirname /;
 use File::Spec;
 use File::Copy;
+use File::Path qw/ rmtree /;
+use File::Temp qw/ tempdir /;
 use Archive::Zip qw/ :ERROR_CODES /;
 use constant {
 	AUTODL_UPDATE_URL => 'https://api.github.com/repos/autodl-community/autodl-irssi/releases/latest',
@@ -151,11 +156,17 @@ sub _parseTrackersUpdate {
 	my $trackersVersion = $trackersData->{tag_name};
 	$trackersVersion =~ s/^trackers-v//;
 	my $trackersAssetName = "autodl-trackers-v$trackersVersion.zip";
+	my $trackersChecksumName = "$trackersAssetName.sha256";
 	my ($trackersAsset) = grep {
 		defined $_->{name} && $_->{name} eq $trackersAssetName
 	} @{$trackersData->{assets} || []};
 	die "Could not find trackers release asset '$trackersAssetName'\n"
 		unless $trackersAsset && $trackersAsset->{browser_download_url};
+	my ($trackersChecksum) = grep {
+		defined $_->{name} && $_->{name} eq $trackersChecksumName
+	} @{$trackersData->{assets} || []};
+	die "Could not find trackers release checksum '$trackersChecksumName'\n"
+		unless $trackersChecksum && $trackersChecksum->{browser_download_url};
 	my $trackersDownloadUrl = $trackersAsset->{browser_download_url};
 	my $trackersChangeLog = $trackersData->{body};
 
@@ -163,6 +174,8 @@ sub _parseTrackersUpdate {
 		version		=> $trackersVersion,
 		whatsNew	=> $trackersChangeLog,
 		url			=> $trackersDownloadUrl,
+		assetName	=> $trackersAssetName,
+		checksumUrl	=> $trackersChecksum->{browser_download_url},
 	};
 
 	$self->{trackers}{whatsNew} =~ s/\r//mg;
@@ -252,7 +265,7 @@ sub _onRequestReceived {
 	}
 }
 
-# Download the trackers file and extract it to $destDir. check() must've been called successfully.
+# Download, validate, and install the trackers file in $destDir. check() must've been called successfully.
 sub updateTrackers {
 	my ($self, $destDir, $handler) = @_;
 
@@ -261,9 +274,37 @@ sub updateTrackers {
 
 	$self->{handler} = $handler || sub {};
 	$self->_createHttpRequest();
-	$self->{request}->sendRequest("GET", "", $self->{trackers}{url}, {}, sub {
-		$self->_onDownloadedTrackersFile(@_, $destDir);
+	$self->{request}->sendRequest("GET", "", $self->{trackers}{checksumUrl}, {}, sub {
+		$self->_onDownloadedTrackersChecksum(@_, $destDir);
 	});
+}
+
+sub _onDownloadedTrackersChecksum {
+	my ($self, $errorMessage, $destDir) = @_;
+
+	eval {
+		return $self->_error("Error getting trackers checksum: $errorMessage") if $errorMessage;
+
+		my $statusCode = $self->{request}->getResponseStatusCode();
+		if ($statusCode != 200) {
+			return $self->_error("Error getting trackers checksum: " . $self->{request}->getResponseStatusText());
+		}
+
+		my $assetName = $self->{trackers}{assetName};
+		my $checksumData = $self->{request}->getResponseData();
+		die "Invalid checksum data\n"
+			unless $checksumData =~ /^([0-9a-fA-F]{64})\s+\*?\Q$assetName\E\s*$/;
+		$self->{trackers}{checksum} = lc $1;
+
+		$self->_createHttpRequest();
+		$self->{request}->sendRequest("GET", "", $self->{trackers}{url}, {}, sub {
+			$self->_onDownloadedTrackersFile(@_, $destDir);
+		});
+	};
+	if ($@) {
+		chomp $@;
+		$self->_error("Error validating trackers checksum: $@");
+	}
 }
 
 sub _onDownloadedTrackersFile {
@@ -277,7 +318,14 @@ sub _onDownloadedTrackersFile {
 			return $self->_error("Error getting trackers file: " . $self->{request}->getResponseStatusText());
 		}
 
-		$self->_extractZipFile($self->{request}->getResponseData(), $destDir);
+		my $zipData = $self->{request}->getResponseData();
+		my $expectedChecksum = $self->{trackers}{checksum};
+		die "Trackers checksum was not downloaded\n" unless $expectedChecksum;
+		my $actualChecksum = sha256_hex($zipData);
+		die "Trackers checksum mismatch (expected $expectedChecksum, got $actualChecksum)\n"
+			unless $actualChecksum eq $expectedChecksum;
+
+		$self->_installTrackerZip($zipData, $destDir);
 
 		$self->_notifyHandler("");
 	};
@@ -285,6 +333,112 @@ sub _onDownloadedTrackersFile {
 		chomp $@;
 		$self->_error("Error downloading trackers file: $@");
 	}
+}
+
+sub _installTrackerZip {
+	my ($self, $zipData, $destDir) = @_;
+
+	my $tmp;
+	my $stageDir;
+	my $error;
+	eval {
+		$tmp = createTempFile();
+		binmode $tmp->{fh};
+		print { $tmp->{fh} } $zipData or die "Could not write to temporary file\n";
+		close $tmp->{fh};
+
+		my $zip = new Archive::Zip();
+		my $code = $zip->read($tmp->{filename});
+		die "Could not read zip file, code: $code, size: " . length($zipData) . "\n"
+			if $code != AZ_OK;
+
+		my @members = $zip->members();
+		die "Tracker archive is empty\n" unless @members;
+		my %memberNames;
+		for my $member (@members) {
+			my $memberName = $member->fileName();
+			die "Invalid tracker archive member '$memberName'\n"
+				if $member->isDirectory() || $memberName !~ /^[A-Za-z0-9][A-Za-z0-9._ -]*\.tracker$/;
+			my $canonicalName = lc $memberName;
+			die "Duplicate tracker archive member '$memberName'\n"
+				if $memberNames{$canonicalName}++;
+		}
+
+		die "Could not create tracker directory '$destDir'\n" unless createDirectories($destDir);
+		$stageDir = tempdir('.autodl-trackers-stage-XXXXXX', DIR => dirname($destDir), CLEANUP => 0);
+		my %trackerTypes;
+		for my $member (@members) {
+			my $memberName = $member->fileName();
+			my $stageFile = File::Spec->catfile($stageDir, $memberName);
+			die "Could not extract tracker file '$memberName'\n"
+				unless $member->extractToFileNamed($stageFile) == AZ_OK;
+			my $trackerInfo = new AutodlIrssi::TrackerXmlParser()->parse($stageFile);
+			my $trackerType = $trackerInfo->{type};
+			die "Tracker file '$memberName' has no type\n"
+				unless defined $trackerType && $trackerType ne '';
+			die "Duplicate tracker type '$trackerType'\n" if $trackerTypes{$trackerType}++;
+		}
+
+		$self->_replaceTrackerFiles($stageDir, $destDir, [map { $_->fileName() } @members]);
+	};
+	$error = $@;
+	if ($tmp) {
+		close $tmp->{fh};
+		unlink $tmp->{filename};
+	}
+	rmtree($stageDir) if $stageDir && -d $stageDir;
+	die $error if $error;
+}
+
+sub _replaceTrackerFiles {
+	my ($self, $stageDir, $destDir, $memberNames) = @_;
+
+	my $backupDir = tempdir('.autodl-trackers-backup-XXXXXX', DIR => dirname($destDir), CLEANUP => 0);
+	my @backedUp;
+	my @installed;
+	my $installError;
+	eval {
+		for my $oldFile ($AutodlIrssi::g->{trackerManager}->getTrackerFiles($destDir)) {
+			my (undef, undef, $fileName) = File::Spec->splitpath($oldFile);
+			my $backupFile = File::Spec->catfile($backupDir, $fileName);
+			move($oldFile, $backupFile) or die "Could not back up tracker file '$oldFile': $!\n";
+			push @backedUp, [$backupFile, $oldFile];
+		}
+
+		for my $memberName (@$memberNames) {
+			my $stageFile = File::Spec->catfile($stageDir, $memberName);
+			my $destFile = File::Spec->catfile($destDir, $memberName);
+			$self->_installStagedTrackerFile($stageFile, $destFile);
+			push @installed, $destFile;
+		}
+	};
+	$installError = $@;
+	if (!$installError) {
+		rmtree($backupDir);
+		return;
+	}
+
+	my @rollbackErrors;
+	for my $installedFile (reverse @installed) {
+		push @rollbackErrors, "Could not remove '$installedFile': $!"
+			unless unlink $installedFile;
+	}
+	for my $backup (reverse @backedUp) {
+		my ($backupFile, $oldFile) = @$backup;
+		push @rollbackErrors, "Could not restore '$oldFile': $!"
+			unless move($backupFile, $oldFile);
+	}
+
+	if (@rollbackErrors) {
+		die $installError . "Rollback failed; backup retained in '$backupDir': " . join('; ', @rollbackErrors) . "\n";
+	}
+	rmtree($backupDir);
+	die $installError;
+}
+
+sub _installStagedTrackerFile {
+	my ($self, $stageFile, $destFile) = @_;
+	move($stageFile, $destFile) or die "Could not install tracker file '$destFile': $!\n";
 }
 
 # Download the autodl file and extract it to $destDir. check() must've been called successfully.

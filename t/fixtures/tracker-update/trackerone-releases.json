@@ -22,6 +22,10 @@
       {
         "name": "autodl-trackers-v291.0.zip",
         "browser_download_url": "https://github.com/trackerone/autodl-irssi/releases/download/trackers-v291.0/autodl-trackers-v291.0.zip"
+      },
+      {
+        "name": "autodl-trackers-v291.0.zip.sha256",
+        "browser_download_url": "https://github.com/trackerone/autodl-irssi/releases/download/trackers-v291.0/autodl-trackers-v291.0.zip.sha256"
       }
     ]
   },

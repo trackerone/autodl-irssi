@@ -42,7 +42,7 @@ jobs:
           echo "version=${version}" >>"${GITHUB_OUTPUT}"
           echo "tag=${tag}" >>"${GITHUB_OUTPUT}"
       - name: Validate definitions and deterministic package
-        run: make test-trackers test-tracker-package
+        run: make test-trackers test-tracker-package test-tracker-update
       - name: Build release archive
         run: ./scripts/build-tracker-release.sh dist
       - name: Publish GitHub release
