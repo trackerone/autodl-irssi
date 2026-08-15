@@ -89,7 +89,7 @@ SCGI/XML-RPC has one loopback and Unix-socket characterization below. The lifecy
 harness covers configuration parsing and the whole module graph in Irssi without
 claiming coverage of other service behavior.
 
-## Issue 190 offline characterization
+## Issue 190 nonblocking TLS regression
 
 The dedicated `make test-https-stall` integration reproducer exercises the
 production `HttpRequest`, `SslSocket`, `SocketBase`, Net::SSLeay, and Irssi
@@ -101,17 +101,22 @@ selected ephemeral port, FIFO readiness synchronization, a committed test-only
 certificate, hard timeouts, and deterministic cleanup.
 
 Immediately after the production HTTPS request has been written, the test
-schedules an independent 500 ms Irssi timer. On Ubuntu 24.04, both the direct CI
-run and the network-disabled development container consistently record the
-successful HTTP callback before the already-expired timer. Once the fixture
-releases its response, the callback runs exactly once, the delayed timer is
-processed, and Irssi exits normally after a settling interval. This demonstrates
-a bounded 2500 ms event-loop stall while the production TLS read waits for data.
+schedules an independent 500 ms Irssi timer. Net::SSLeay documents
+`ssl_read_all()` as providing true blocking semantics, but the client selected
+that helper on Net::SSLeay 1.84 and newer even though its socket and Irssi input
+handlers are nonblocking. The fixture previously recorded the HTTP callback
+before the already-expired timer, demonstrating a bounded 2500 ms event-loop
+stall inside the TLS read.
 
-The result is consistent with the nonblocking SSL-read behavior reported in
-issue #190. It does not reproduce the report's intermittent permanent hang,
-measure CPU use, establish a root cause, or propose a production fix. No
-production HTTP, TLS, socket, retry, or timeout behavior is changed.
+`SslSocket` now performs one low-level `SSL_read` through `Net::SSLeay::read()`
+per readiness event on every supported Net::SSLeay version. `WANT_READ` and
+`WANT_WRITE` continue through the existing Irssi handler selection. The
+regression requires the independent timer to fire before the delayed HTTP
+callback, which then succeeds exactly once. This removes the reproduced blocking
+condition associated with issue #190 without changing HTTP retry policy or
+timeouts. The upstream report's intermittent permanent hang is not reproduced,
+so this fix is limited to the demonstrated event-loop stall. No version, tag, or
+release is created.
 
 ## Issue 191 offline characterization
 
@@ -314,9 +319,9 @@ reproduced by this work:
   Boundaries are `HttpRequest.pm`, `ActiveConnections.pm`, `SocketBase.pm`, and
   `Socket.pm`.
 
-These mappings identify code to inspect only. They neither establish root
-causes nor propose fixes. The bounded HTTPS event-loop stall associated with
-issue #190, the incomplete-header parser/retry result associated with issue
+These mappings identify code to inspect. The demonstrated HTTPS event-loop stall
+associated with issue #190 is fixed and guarded by the delayed-response
+regression above. The incomplete-header parser/retry result associated with issue
 #191, the controlled tracker replacement and reload path associated with issue
 #198, and the repeated HTTP behavior associated with issue #210 are
 characterized above. Issue #190's intermittent permanent hang, issue #191's
@@ -352,6 +357,6 @@ These observations are review prompts, not reproduced vulnerabilities:
    announce parsing are covered by the tracker-definition integration.
 3. Local-only fake servers now characterize HTTP/TLS/socket and SCGI/XML-RPC
    behavior; live rTorrent behavior remains outside the repository boundary.
-4. Only after those tests exist, address HTTP/TLS/socket and updater findings in
-   separate, narrowly scoped changes, followed by rTorrent and ruTorrent
-   integration work.
+4. Address HTTP/TLS/socket and updater findings in separate, narrowly scoped
+   changes. The demonstrated blocking TLS read is fixed; the remaining findings
+   and later rTorrent/ruTorrent integration stay separate.

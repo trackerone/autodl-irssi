@@ -107,11 +107,11 @@ assert_count 'RESPONSE_SENT HTTP/1.1 200 OK' "$server_log" 1
 
 callback_line=$(grep -n -F 'HTTPSSTALL:FINAL_CALLBACK:1:' "$window_log" | cut -d: -f1)
 timer_line=$(grep -n -F 'HTTPSSTALL:IRSSI_TIMER_FIRED' "$window_log" | cut -d: -f1)
-[ "$callback_line" -lt "$timer_line" ] || {
-	printf '%s\n' 'Expected the completed HTTPS callback before the expired Irssi timer.' >&2
+[ "$timer_line" -lt "$callback_line" ] || {
+	printf '%s\n' 'Expected the Irssi timer before the delayed HTTPS callback.' >&2
 	exit 1
 }
-observation='callback-before-timer (event loop delayed during TLS read)'
+observation='timer-before-callback (event loop responsive during TLS read)'
 
 if grep -Eiq 'segmentation fault|core dumped|uncaught exception|stale callback|forced termination|error in script|error loading script|assertion .* failed' "$window_log" "$terminal_log"; then
 	printf '%s\n' 'Integration output contains a fatal diagnostic.' >&2

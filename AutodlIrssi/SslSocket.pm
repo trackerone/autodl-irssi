@@ -203,13 +203,9 @@ sub _doRead {
 
 	while ($self->{hasReadHandler}) {
 		my $len = Net::SSLeay::pending($self->{ssl}) || 2048;
-		my $got;
-		if ($Net::SSLeay::VERSION >= 1.84) {
-			$got = Net::SSLeay::ssl_read_all($self->{ssl}, $len);
-		}
-		else {
-			$got = Net::SSLeay::read($self->{ssl}, $len);
-		}
+		# ssl_read_all() has blocking semantics. Perform one low-level read per
+		# readiness event so WANT_READ/WANT_WRITE returns control to Irssi.
+		my $got = Net::SSLeay::read($self->{ssl}, $len);
 		if (defined $got) {
 			return unless $self->_callUser($readHandler, "", $got);
 			return if length $got == 0;	# Stop if remote peer closed the connection
