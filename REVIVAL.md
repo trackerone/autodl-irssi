@@ -81,12 +81,13 @@ declaring every historical edge case correct.
 ## Integration-only or currently untested components
 
 IRC connection and live announce matching, live torrent downloads, HTTP redirects,
-general TLS behavior, FTP, sockets, SCGI/XML-RPC/rTorrent,
+general TLS behavior, FTP, sockets, live rTorrent,
 uTorrent WebUI, watch folders, external commands, WOL, the local GUI server, application
 updater file replacement, and ruTorrent all require later integration fixtures or
 services. Tracker updater replacement has one controlled offline characterization below.
-The lifecycle harness covers configuration parsing and the whole module graph in
-Irssi without claiming coverage of service behavior.
+SCGI/XML-RPC has one loopback and Unix-socket characterization below. The lifecycle
+harness covers configuration parsing and the whole module graph in Irssi without
+claiming coverage of other service behavior.
 
 ## Issue 190 offline characterization
 
@@ -256,6 +257,24 @@ wildcards, and invalid upload types. The existing tracker-definition integration
 continues to cover production tracker XML and representative announce parsing.
 No version, tag, or release is created by these tests.
 
+## SCGI/XML-RPC/rTorrent sandbox
+
+The dedicated `make test-scgi-xmlrpc` integration drives the production `Scgi`,
+`Socket`, `DomainSocket`, `XmlRpcSimpleCall`, `XmlRpcResponseParser`, and
+`RtorrentCommands` modules inside packaged Irssi. Two local fixture servers cover
+both supported transports: an operating-system-selected TCP loopback port and an
+isolated Unix-domain socket. Neither fixture starts rTorrent or contacts an
+external service.
+
+Each server validates the SCGI netstring framing, required headers, content
+length, XML-RPC method, XML escaping, torrent path, and generated rTorrent command
+string. The TCP fixture returns a successful string value after a delay that lets
+an independent Irssi timer run. The Unix-socket fixture returns an XML-RPC fault;
+the production parser reports its code and message exactly once. This
+characterizes transport selection and request/response behavior without changing
+the production SCGI, XML-RPC, socket, or rTorrent upload implementation. No
+version, tag, or release is created by the sandbox.
+
 `trackers/VERSION` identifies the fork-owned tracker release. The shared
 `scripts/build-tracker-release.sh` builder creates a deterministic flat ZIP,
 verifies its 77 names and contents, and writes a SHA-256 checksum. CI runs the
@@ -331,7 +350,8 @@ These observations are review prompts, not reproduced vulnerabilities:
 2. Configuration diagnostics are isolated from Globals/Irssi, with fixture
    coverage for config and filter parsing. Tracker XML and representative
    announce parsing are covered by the tracker-definition integration.
-3. Build local-only fake servers for HTTP/TLS/socket and SCGI/XML-RPC behavior.
+3. Local-only fake servers now characterize HTTP/TLS/socket and SCGI/XML-RPC
+   behavior; live rTorrent behavior remains outside the repository boundary.
 4. Only after those tests exist, address HTTP/TLS/socket and updater findings in
    separate, narrowly scoped changes, followed by rTorrent and ruTorrent
    integration work.

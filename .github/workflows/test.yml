@@ -39,6 +39,8 @@ jobs:
         run: make test-http-incomplete-header
       - name: Run tracker update installation characterization
         run: make test-tracker-update
+      - name: Run SCGI and XML-RPC characterization
+        run: make test-scgi-xmlrpc
       - name: Validate imported tracker definitions
         run: make test-trackers
       - name: Build and verify tracker release package
