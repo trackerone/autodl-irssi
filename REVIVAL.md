@@ -228,6 +228,20 @@ size populates the production size field. `trackers/AUDIT.md` records the
 evidence and test boundary. The audit does not change `trackers/VERSION`, create
 a tag, or publish a release.
 
+## Current release years
+
+The core release-name parser inherited a fixed `2000-2019` year range, so
+movies and dated TV releases from 2020 onward did not contribute their year or
+`YYYY-MM-DD` value to extracted metadata and title boundaries. This is the bug
+reported by upstream PR #194. The parser now accepts `2000-2099` consistently
+in its standalone-year, date, and TV-date checks while retaining the historical
+1930 lower bound and rejecting 2100.
+
+The deterministic regression test covers 2020 and 2026 movies, a 2026 dated TV
+release, a TV title whose 2005 year must remain in the title, and the century
+boundaries. This core fix does not change `VERSION`, create a tag, or publish a
+release.
+
 `trackers/VERSION` identifies the fork-owned tracker release. The shared
 `scripts/build-tracker-release.sh` builder creates a deterministic flat ZIP,
 verifies its 77 names and contents, and writes a SHA-256 checksum. CI runs the
