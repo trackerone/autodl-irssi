@@ -162,28 +162,29 @@ not reproduce or measure the reported 100% CPU symptom, and it does not
 establish a root cause or proposed fix. No production retry policy, interval,
 default, HTTP parsing, or socket behavior is changed by the characterization.
 
-## Issue 198 offline characterization
+## Tracker release/updater sandbox
 
-The dedicated `make test-tracker-update` integration characterizes the tracker
-installation path associated with issue #198 without contacting GitHub. Direct
-inspection of the historical `autodl-trackers-v284.zip` release asset confirms
-that its 120 tracker members are stored as flat filenames at the archive root.
-The test transport therefore returns a small archive with that same layout to
-the production `Updater` inside a packaged Irssi process.
+The dedicated `make test-tracker-update` integration exercises the complete
+tracker release/update path without contacting GitHub. It builds the current
+77-file release archive and checksum with the production builder, returns
+release metadata through a fixture transport, and drives the production
+`Updater` inside a packaged Irssi process. The release workflow runs this same
+test before it can publish tracker assets.
 
-Starting with one current and one obsolete tracker file, the controlled update
-calls its success handler exactly once, replaces the current file's contents,
-removes the obsolete file, and adds a new file. Reloading through the production
-`TrackerManager` then exposes exactly the two tracker types from the archive.
-This establishes that the release-style archive replacement and reload path
-works in the isolated Ubuntu 24.04 fixture; it does not reproduce the stale-file
-result reported in issue #198.
+The updater requires both the versioned ZIP and its `.sha256` asset. The sandbox
+verifies the request order, rejects missing assets and a checksum-mismatched ZIP
+before changing the installation, then installs all 77 files and reloads all 77
+tracker types. Archive members must be flat, uniquely named `.tracker` files,
+and every definition must parse with a unique tracker type before installation.
 
-The test does not contact the releases API, preserve the full historical v284
-archive in the repository, reproduce the reporter's filesystem ownership,
-permissions, symlink layout, or installation path, establish a root cause, or
-propose a fix. No production updater, tracker manager, or path behavior is
-changed by the characterization.
+Installation now stages and validates the complete package before moving any
+existing tracker file. Existing files are backed up during replacement; an
+injected mid-install failure proves that the partially installed package is
+removed and the exact prior file set and contents are restored. A traversal
+member is also rejected without writing outside the destination. This closes
+the destructive partial-install path found during the sandbox audit, but does
+not reproduce issue #198's original filesystem ownership or path conditions.
+No version, tag, or release is created by the test.
 
 ## Historical tracker release source
 
@@ -283,8 +284,9 @@ These observations are review prompts, not reproduced vulnerabilities:
 * the installation documentation pipes data derived from a shortened HTTP URL
   into download tooling and should eventually be replaced by an authenticated,
   checksum-verifiable installation path;
-* the updater writes remotely supplied release archives into the installation
-  and does not expose an artifact checksum or signature verification step;
+* tracker updates require the published SHA-256 asset and validate all tracker
+  definitions transactionally, while application updates still lack an
+  artifact checksum or signature verification step;
 * the custom HTTP/TLS/socket implementation needs focused review for certificate
   and hostname verification, protocol policy, redirects, framing, timeouts, and
   partial reads before it is treated as a secure modern client;
